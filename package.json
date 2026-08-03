@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0",
   "name": "@honeyhive/control-plane-sdk",
   "type": "module",
   "main": "dist/index.js",
