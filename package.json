@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "@honeyhive/control-plane-sdk",
   "type": "module",
   "main": "dist/index.js",
@@ -19,7 +19,7 @@
   },
   "homepage": "https://docs.honeyhive.ai/v2/control-plane-sdk-reference/typescript",
   "dependencies": {
-    "axios": "1.18.1",
+    "axios": "1.19.0",
     "openapi-fetch": "^0.17.0"
   },
   "publishConfig": {

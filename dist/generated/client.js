@@ -53,6 +53,107 @@ class AlertsNamespace {
     }
 }
 /** @inline */
+class WorkspacesNamespace {
+    #client;
+    constructor(client) {
+        this.#client = client;
+    }
+    /**
+     * Create a workspace
+     *
+     * Create a workspace in a virtual data plane. The parent virtual data plane is identified by
+     * the `virtual_dataplane_id` path parameter alone; the `x-hh-dataplane-id` header does not
+     * participate. Your organization's virtual data plane ids are listed on the API keys page of
+     * your organization settings in the HoneyHive app. Most organizations have exactly one.
+     *
+     * The new workspace contains no projects. Create one with
+     * `POST /v1/workspaces/{workspace_id}/projects` if you need it, because a workspace with no
+     * projects has nowhere to log events.
+     *
+     * The optional `workspace_creator` field names the user (by email) who receives the
+     * workspace-creator membership on the new workspace. The named user must already be a member
+     * of the virtual data plane. When omitted, the workspace is created without any membership.
+     * The field is only accepted on API-key-initiated requests. User-initiated creation always
+     * makes the calling user the creator, so sending the field returns a 400.
+     *
+     * The roles that membership carries come from your organization's role configuration. An
+     * organization that grants no role on workspace creation is a supported case: the request
+     * still succeeds and the named user receives no access. A 200 response is not by itself
+     * confirmation that the named user was granted anything.
+     *
+     * A `workspace_creator` who is already signed in does not see the new workspace immediately.
+     * A session captures its scope tree and permission grants when it is created, so a membership
+     * granted afterwards is not reflected in it. Creating the workspace marks that user's sessions
+     * for refresh, and the refresh takes effect on their next request to the control plane, so an
+     * idle browser tab may need a page reload.
+     */
+    create(request, options) {
+        const { virtual_dataplane_id, ...body } = request;
+        return unwrap(this.#client.POST('/v1/virtual_dataplanes/{virtual_dataplane_id}/workspaces', {
+            params: { path: { virtual_dataplane_id } },
+            body,
+            ...options,
+        }));
+    }
+    /**
+     * Get a workspace
+     *
+     * Retrieve a single workspace by id. The workspace is identified by the `workspace_id` path
+     * parameter alone; the `x-hh-workspace-id` header does not participate.
+     *
+     * The returned `name` is the workspace's display name. The globally unique slug the workspace
+     * was assigned at creation is an internal detail and is not part of this contract.
+     */
+    get(request, options) {
+        const { workspace_id } = request;
+        return unwrap(this.#client.GET('/v1/workspaces/{workspace_id}', {
+            params: { path: { workspace_id } },
+            ...options,
+        }));
+    }
+    /**
+     * Update a workspace
+     *
+     * Update a workspace's display name and/or description. The workspace is identified by the
+     * `workspace_id` path parameter alone; the `x-hh-workspace-id` header does not participate.
+     * Only fields included in the request body are modified.
+     *
+     * The workspace's internal slug is not part of this contract and cannot be changed here.
+     */
+    update(request, options) {
+        const { workspace_id, ...body } = request;
+        return unwrap(this.#client.PUT('/v1/workspaces/{workspace_id}', {
+            params: { path: { workspace_id } },
+            body,
+            ...options,
+        }));
+    }
+    /**
+     * Delete a workspace
+     *
+     * Delete a workspace. The workspace is soft-deleted (archived) and no longer appears in reads;
+     * the response returns the archived workspace. The workspace is identified by the
+     * `workspace_id` path parameter alone; the `x-hh-workspace-id` header does not participate.
+     *
+     * **Deleting a workspace also archives every project inside it**, so the events, datasets,
+     * and evaluations in those projects are no longer reachable. Because that reaches well
+     * beyond the resource named in the URL, a workspace that still has active projects is
+     * rejected with a 409 unless the request sets `dangerously_delete_child_scopes=true`.
+     * Projects that were already archived do not count, so a workspace emptied one project at a
+     * time deletes without the flag.
+     *
+     * The response describes only the workspace. It does not enumerate the projects archived
+     * alongside it, so read them first if you need that list.
+     */
+    delete(request, options) {
+        const { workspace_id, dangerously_delete_child_scopes } = request;
+        return unwrap(this.#client.DELETE('/v1/workspaces/{workspace_id}', {
+            params: { path: { workspace_id }, query: { dangerously_delete_child_scopes } },
+            ...options,
+        }));
+    }
+}
+/** @inline */
 class ProjectsNamespace {
     #client;
     constructor(client) {
@@ -62,13 +163,25 @@ class ProjectsNamespace {
      * Create a project
      *
      * Create a project in a workspace. The parent workspace is identified by the `workspace_id`
-     * path parameter alone; the `x-hh-workspace-id` header does not participate.
+     * path parameter alone; the `x-hh-workspace-id` header does not participate. A workspace's id
+     * is listed on the API keys page of its workspace settings in the HoneyHive app.
      *
      * The optional `project_creator` field names the user (by email) who receives the
      * project-creator membership on the new project. The named user must already be a member of
      * the workspace. When omitted, the project is created without any membership. The field is
-     * only accepted on API-key-initiated requests — user-initiated creation always makes the
-     * calling user the creator and rejects the field with a 400.
+     * only accepted on API-key-initiated requests. User-initiated creation always makes the
+     * calling user the creator, so sending the field returns a 400.
+     *
+     * The roles that membership carries come from your organization's role configuration. An
+     * organization that grants no role on project creation is a supported case: the request
+     * still succeeds and the named user receives no access. A 200 response is not by itself
+     * confirmation that the named user was granted anything.
+     *
+     * A `project_creator` who is already signed in does not see the new project immediately. A
+     * session captures its scope tree and permission grants when it is created, so a membership
+     * granted afterwards is not reflected in it. Creating the project marks that user's sessions
+     * for refresh, and the refresh takes effect on their next request to the control plane, so
+     * an idle browser tab may need a page reload.
      */
     create(request, options) {
         const { workspace_id, ...body } = request;
@@ -121,14 +234,149 @@ class ProjectsNamespace {
         }));
     }
 }
+/** @inline */
+class VirtualDataplanesNamespace {
+    #client;
+    constructor(client) {
+        this.#client = client;
+    }
+    /**
+     * Create a virtual data plane
+     *
+     * Create a virtual data plane in an organization. The parent organization is identified by the
+     * `org_id` path parameter alone; the `x-hh-org-id` header does not participate. Your
+     * organization's id is listed on the API keys page of your organization settings in the
+     * HoneyHive app.
+     *
+     * A virtual data plane is a logical tenant boundary hosted on a physical cluster, and several
+     * of them commonly share one cluster. Workspaces are created inside it.
+     *
+     * `cluster_id` is optional, and omitting it is the common case: the new virtual data plane is
+     * placed on the same cluster as the organization's existing ones. Two situations require it
+     * explicitly, and both return a 400 that says so rather than guessing: an organization whose
+     * existing virtual data planes span more than one cluster, and an organization that has none
+     * yet. Every response includes `cluster_id`, so reading an existing virtual data plane tells
+     * you which value to send.
+     *
+     * A cluster admits an organization only if your control plane administrator configured it to,
+     * so a `cluster_id` you can read from a sibling virtual data plane is not necessarily one you
+     * may place a new virtual data plane on. A cluster that does not admit this organization
+     * returns a 403. When you named the cluster, the fix is a configuration change your
+     * administrator makes. When this endpoint inferred the cluster, send an explicit `cluster_id`
+     * to place the virtual data plane on another cluster.
+     *
+     * Deployments differ in who places virtual data planes. Where HoneyHive assigns them to
+     * organizations automatically, this endpoint returns a 403 for every request and the
+     * placement is not yours to make. Deployments whose administrators own the scope tree are
+     * the ones this endpoint serves.
+     *
+     * The optional `dataplane_creator` field names the user (by email) who receives the
+     * dataplane-creator membership on the new virtual data plane. The named user must already be a
+     * member of the organization. When omitted, it is created without any membership. The field is
+     * only accepted on API-key-initiated requests; user-initiated creation always makes the
+     * calling user the creator, so sending the field returns a 400.
+     *
+     * The roles that membership carries come from your organization's role configuration. An
+     * organization that grants no role on dataplane creation is a supported case: the request
+     * still succeeds and the named user receives no access. A 200 response is not by itself
+     * confirmation that the named user was granted anything.
+     *
+     * A `dataplane_creator` who is already signed in does not see the new virtual data plane
+     * immediately. A session captures its scope tree and permission grants when it is created, so
+     * a membership granted afterwards is not reflected in it; the refresh takes effect on their
+     * next request to the control plane.
+     */
+    create(request, options) {
+        const { org_id, ...body } = request;
+        return unwrap(this.#client.POST('/v1/orgs/{org_id}/virtual_dataplanes', {
+            params: { path: { org_id } },
+            body,
+            ...options,
+        }));
+    }
+    /**
+     * Get a virtual data plane
+     *
+     * Retrieve a single virtual data plane by id. It is identified by the `virtual_dataplane_id`
+     * path parameter alone; the `x-hh-dataplane-id` header does not participate.
+     *
+     * The returned `name` is the display name. The globally unique slug assigned at creation is
+     * an internal detail and is not part of this contract. `cluster_id` is the physical cluster
+     * hosting this virtual data plane, and it is the value to send when creating another one
+     * beside it.
+     *
+     * Reads work on every deployment, including those where HoneyHive assigns virtual data
+     * planes automatically and the write endpoints are unavailable.
+     */
+    get(request, options) {
+        const { virtual_dataplane_id } = request;
+        return unwrap(this.#client.GET('/v1/virtual_dataplanes/{virtual_dataplane_id}', {
+            params: { path: { virtual_dataplane_id } },
+            ...options,
+        }));
+    }
+    /**
+     * Update a virtual data plane
+     *
+     * Update a virtual data plane's display name. It is identified by the `virtual_dataplane_id`
+     * path parameter alone; the `x-hh-dataplane-id` header does not participate.
+     *
+     * `name` is the only field this endpoint changes. `cluster_id` is placement rather than
+     * description: the workspaces and projects inside a virtual data plane hold data on the
+     * cluster hosting it, so moving one is a migration and not an update. A request that omits
+     * `name`, or sends the current one, changes nothing.
+     *
+     * This endpoint is unavailable where HoneyHive assigns virtual data planes automatically,
+     * and returns a 403 there.
+     */
+    update(request, options) {
+        const { virtual_dataplane_id, ...body } = request;
+        return unwrap(this.#client.PUT('/v1/virtual_dataplanes/{virtual_dataplane_id}', {
+            params: { path: { virtual_dataplane_id } },
+            body,
+            ...options,
+        }));
+    }
+    /**
+     * Delete a virtual data plane
+     *
+     * Delete a virtual data plane. It is soft-deleted (archived) and no longer appears in reads;
+     * the response returns the archived virtual data plane. It is identified by the
+     * `virtual_dataplane_id` path parameter alone; the `x-hh-dataplane-id` header does not
+     * participate.
+     *
+     * **Deleting a virtual data plane also archives every workspace inside it and every project
+     * inside those workspaces**, so the events, datasets, and evaluations in them are no longer
+     * reachable. Because that reaches two levels below the resource named in the URL, a virtual
+     * data plane with active workspaces is rejected with a 409 unless the request sets
+     * `dangerously_delete_child_scopes=true`. Workspaces that were already archived do not count.
+     *
+     * The response describes only the virtual data plane. It does not enumerate what the cascade
+     * archived, so read that first if you need the list.
+     *
+     * This endpoint is unavailable where HoneyHive assigns virtual data planes automatically,
+     * and returns a 403 there.
+     */
+    delete(request, options) {
+        const { virtual_dataplane_id, dangerously_delete_child_scopes } = request;
+        return unwrap(this.#client.DELETE('/v1/virtual_dataplanes/{virtual_dataplane_id}', {
+            params: { path: { virtual_dataplane_id }, query: { dangerously_delete_child_scopes } },
+            ...options,
+        }));
+    }
+}
 export class Client {
     #client;
     alerts;
+    workspaces;
     projects;
+    virtualDataplanes;
     constructor(options = {}) {
         this.#client = createApiClient(options);
         this.alerts = new AlertsNamespace(this.#client);
+        this.workspaces = new WorkspacesNamespace(this.#client);
         this.projects = new ProjectsNamespace(this.#client);
+        this.virtualDataplanes = new VirtualDataplanesNamespace(this.#client);
     }
 }
 //# sourceMappingURL=client.js.map

@@ -40,8 +40,8 @@ import { Client } from '@honeyhive/control-plane-sdk';
 // variable and defaults to https://api.cp.us.honeyhive.ai
 const client = new Client();
 
-// Projects are created inside a workspace, and this SDK exposes no way to look a
-// workspace up, so its id has to be supplied. The id appears in the HoneyHive
+// Projects are created inside a workspace, and this SDK exposes no way to list
+// workspaces, so its id has to be supplied. The id appears in the HoneyHive
 // app's URL while you are viewing that workspace.
 const workspaceId = 'your-workspace-id';
 

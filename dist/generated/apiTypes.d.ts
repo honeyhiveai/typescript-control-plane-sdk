@@ -44,6 +44,40 @@ export interface GetAlertRequest {
     /** @description The unique identifier of the alert to retrieve */
     alert_id: string;
 }
+export interface CreateWorkspaceRequest {
+    /** @description The unique identifier of the virtual data plane the workspace is created in */
+    virtual_dataplane_id: string;
+    /** @description Workspace display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. */
+    name: string;
+    /** @description Workspace description */
+    description?: string;
+    /**
+     * Format: email
+     * @description Email of the user to grant the workspace-creator membership to (API key actors only). A signed-in user does not see the new workspace until their session refreshes, which happens on their next request to the control plane.
+     */
+    workspace_creator?: string;
+}
+export interface GetWorkspaceRequest {
+    /** @description The unique identifier of the workspace to retrieve */
+    workspace_id: string;
+}
+export interface UpdateWorkspaceRequest {
+    /** @description The unique identifier of the workspace to update */
+    workspace_id: string;
+    /** @description Workspace display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. */
+    name?: string;
+    /** @description Workspace description */
+    description?: string;
+}
+export interface DeleteWorkspaceRequest {
+    /** @description The unique identifier of the workspace to delete */
+    workspace_id: string;
+    /**
+     * @description Archive the workspace even when it still has active projects, archiving those projects
+     *     too. Without it, such a request fails with a 409 and no changes are made.
+     */
+    dangerously_delete_child_scopes?: boolean;
+}
 export interface CreateProjectRequest {
     /** @description The unique identifier of the workspace the project is created in */
     workspace_id: string;
@@ -53,7 +87,7 @@ export interface CreateProjectRequest {
     description?: string;
     /**
      * Format: email
-     * @description Email of the user to grant the project-creator membership to (API key actors only)
+     * @description Email of the user to grant the project-creator membership to (API key actors only). A signed-in user does not see the new project until their session refreshes, which happens on their next request to the control plane.
      */
     project_creator?: string;
 }
@@ -72,6 +106,39 @@ export interface UpdateProjectRequest {
 export interface DeleteProjectRequest {
     /** @description The unique identifier of the project to delete */
     project_id: string;
+}
+export interface CreateVirtualDataplaneRequest {
+    /** @description The unique identifier of the organization the virtual data plane is created in */
+    org_id: string;
+    /** @description Virtual dataplane display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. */
+    name: string;
+    /** @description Physical cluster to host this virtual dataplane. Omit to place it alongside the existing virtual dataplanes in this org; required when the org has none yet, or when its virtual dataplanes span more than one cluster. */
+    cluster_id?: string;
+    /**
+     * Format: email
+     * @description Email of the user to grant the dataplane-creator membership to (API key actors only). A signed-in user does not see the new dataplane until their session refreshes, which happens on their next request to the control plane.
+     */
+    dataplane_creator?: string;
+}
+export interface GetVirtualDataplaneRequest {
+    /** @description The unique identifier of the virtual data plane to retrieve */
+    virtual_dataplane_id: string;
+}
+export interface UpdateVirtualDataplaneRequest {
+    /** @description The unique identifier of the virtual data plane to update */
+    virtual_dataplane_id: string;
+    /** @description Virtual dataplane display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. */
+    name?: string;
+}
+export interface DeleteVirtualDataplaneRequest {
+    /** @description The unique identifier of the virtual data plane to delete */
+    virtual_dataplane_id: string;
+    /**
+     * @description Archive the virtual data plane even when it still has active workspaces, archiving
+     *     those workspaces and their projects too. Without it, such a request fails with a 409
+     *     and no changes are made.
+     */
+    dangerously_delete_child_scopes?: boolean;
 }
 /**
  * @description A paginated list of alerts
@@ -97,6 +164,34 @@ export type GetAlertResponse = {
     /** @enum {boolean} */
     success: true;
     data: AlertItem;
+};
+/**
+ * @description The created workspace
+ */
+export type CreateWorkspaceResponse = {
+    success: boolean;
+    data: WorkspaceItem;
+};
+/**
+ * @description A single workspace
+ */
+export type GetWorkspaceResponse = {
+    success: boolean;
+    data: WorkspaceItem;
+};
+/**
+ * @description The updated workspace
+ */
+export type UpdateWorkspaceResponse = {
+    success: boolean;
+    data: WorkspaceItem;
+};
+/**
+ * @description The deleted (archived) workspace. Descendants archived by the cascade are not listed.
+ */
+export type DeleteWorkspaceResponse = {
+    success: boolean;
+    data: WorkspaceItem;
 };
 /**
  * @description The created project
@@ -125,6 +220,34 @@ export type UpdateProjectResponse = {
 export type DeleteProjectResponse = {
     success: boolean;
     data: ProjectItem;
+};
+/**
+ * @description The created virtual dataplane
+ */
+export type CreateVirtualDataplaneResponse = {
+    success: boolean;
+    data: VirtualDataplaneItem;
+};
+/**
+ * @description A single virtual dataplane
+ */
+export type GetVirtualDataplaneResponse = {
+    success: boolean;
+    data: VirtualDataplaneItem;
+};
+/**
+ * @description The updated virtual dataplane
+ */
+export type UpdateVirtualDataplaneResponse = {
+    success: boolean;
+    data: VirtualDataplaneItem;
+};
+/**
+ * @description The deleted (archived) virtual dataplane. Descendants archived by the cascade are not listed.
+ */
+export type DeleteVirtualDataplaneResponse = {
+    success: boolean;
+    data: VirtualDataplaneItem;
 };
 /**
  * @description Alert object
@@ -257,6 +380,32 @@ export type ProjectItem = {
     /** @description Project display name */
     name: string;
     /** @description Project description */
+    description: string;
+    created_at: string;
+    updated_at?: string | null;
+};
+/**
+ * @description Virtual dataplane object
+ * @inline
+ */
+export type VirtualDataplaneItem = {
+    id: string;
+    /** @description Virtual dataplane display name */
+    name: string;
+    /** @description Identifier of the physical cluster hosting this dataplane */
+    cluster_id: string;
+    created_at: string;
+    updated_at: string;
+};
+/**
+ * @description Workspace object
+ * @inline
+ */
+export type WorkspaceItem = {
+    id: string;
+    /** @description Workspace display name */
+    name: string;
+    /** @description Workspace description */
     description: string;
     created_at: string;
     updated_at?: string | null;
