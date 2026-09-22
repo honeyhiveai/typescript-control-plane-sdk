@@ -1,5 +1,7 @@
 // AUTO-GENERATED — do not edit manually. Run `pnpm turbo run generate` to regenerate.
 
+import { type Client as OpenapiFetchClient } from 'openapi-fetch';
+
 import { type paths } from './types.js';
 import {
   type ListAlertsRequest,
@@ -35,12 +37,23 @@ import {
 } from './apiTypes.js';
 import { type ClientConfig, type FetchOptions, createApiClient, unwrap } from '../util.js';
 
+/** Every security scheme the API's OpenAPI spec defines. */
+export type SecurityScheme = 'ControlPlaneApiKey';
+
+/**
+ * What `createApiClient` returns: for every security scheme the spec defines,
+ * the openapi-fetch client that carries the credential for it. The hand-written
+ * chassis builds this table, so a scheme added to or removed from the spec
+ * fails to compile there until the table says which client serves it.
+ */
+export type ApiClients = Record<SecurityScheme, OpenapiFetchClient<paths>>;
+
 /** @inline */
 class AlertsNamespace {
-  #client: ReturnType<typeof createApiClient<paths>>;
+  #clients: ApiClients;
 
-  constructor(client: ReturnType<typeof createApiClient<paths>>) {
-    this.#client = client;
+  constructor(clients: ApiClients) {
+    this.#clients = clients;
   }
 
   /**
@@ -52,8 +65,9 @@ class AlertsNamespace {
    */
   public list(request: ListAlertsRequest, options?: FetchOptions): Promise<ListAlertsResponse> {
     const { project_id, page, limit, status, sort_by, sort_order } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
     return unwrap(
-      this.#client.GET('/v1/projects/{project_id}/alerts', {
+      httpClient.GET('/v1/projects/{project_id}/alerts', {
         params: { path: { project_id }, query: { page, limit, status, sort_by, sort_order } },
         ...options,
       }),
@@ -71,8 +85,9 @@ class AlertsNamespace {
    */
   public create(request: CreateAlertRequest, options?: FetchOptions): Promise<CreateAlertResponse> {
     const { project_id, ...body } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
     return unwrap(
-      this.#client.POST('/v1/projects/{project_id}/alerts', {
+      httpClient.POST('/v1/projects/{project_id}/alerts', {
         params: { path: { project_id } },
         body,
         ...options,
@@ -89,8 +104,9 @@ class AlertsNamespace {
    */
   public get(request: GetAlertRequest, options?: FetchOptions): Promise<GetAlertResponse> {
     const { project_id, alert_id } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
     return unwrap(
-      this.#client.GET('/v1/projects/{project_id}/alerts/{alert_id}', {
+      httpClient.GET('/v1/projects/{project_id}/alerts/{alert_id}', {
         params: { path: { project_id, alert_id } },
         ...options,
       }),
@@ -100,10 +116,10 @@ class AlertsNamespace {
 
 /** @inline */
 class WorkspacesNamespace {
-  #client: ReturnType<typeof createApiClient<paths>>;
+  #clients: ApiClients;
 
-  constructor(client: ReturnType<typeof createApiClient<paths>>) {
-    this.#client = client;
+  constructor(clients: ApiClients) {
+    this.#clients = clients;
   }
 
   /**
@@ -140,8 +156,9 @@ class WorkspacesNamespace {
     options?: FetchOptions,
   ): Promise<CreateWorkspaceResponse> {
     const { virtual_dataplane_id, ...body } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
     return unwrap(
-      this.#client.POST('/v1/virtual_dataplanes/{virtual_dataplane_id}/workspaces', {
+      httpClient.POST('/v1/virtual_dataplanes/{virtual_dataplane_id}/workspaces', {
         params: { path: { virtual_dataplane_id } },
         body,
         ...options,
@@ -160,8 +177,9 @@ class WorkspacesNamespace {
    */
   public get(request: GetWorkspaceRequest, options?: FetchOptions): Promise<GetWorkspaceResponse> {
     const { workspace_id } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
     return unwrap(
-      this.#client.GET('/v1/workspaces/{workspace_id}', {
+      httpClient.GET('/v1/workspaces/{workspace_id}', {
         params: { path: { workspace_id } },
         ...options,
       }),
@@ -182,8 +200,9 @@ class WorkspacesNamespace {
     options?: FetchOptions,
   ): Promise<UpdateWorkspaceResponse> {
     const { workspace_id, ...body } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
     return unwrap(
-      this.#client.PUT('/v1/workspaces/{workspace_id}', {
+      httpClient.PUT('/v1/workspaces/{workspace_id}', {
         params: { path: { workspace_id } },
         body,
         ...options,
@@ -213,8 +232,9 @@ class WorkspacesNamespace {
     options?: FetchOptions,
   ): Promise<DeleteWorkspaceResponse> {
     const { workspace_id, dangerously_delete_child_scopes } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
     return unwrap(
-      this.#client.DELETE('/v1/workspaces/{workspace_id}', {
+      httpClient.DELETE('/v1/workspaces/{workspace_id}', {
         params: { path: { workspace_id }, query: { dangerously_delete_child_scopes } },
         ...options,
       }),
@@ -224,10 +244,10 @@ class WorkspacesNamespace {
 
 /** @inline */
 class ProjectsNamespace {
-  #client: ReturnType<typeof createApiClient<paths>>;
+  #clients: ApiClients;
 
-  constructor(client: ReturnType<typeof createApiClient<paths>>) {
-    this.#client = client;
+  constructor(clients: ApiClients) {
+    this.#clients = clients;
   }
 
   /**
@@ -259,8 +279,9 @@ class ProjectsNamespace {
     options?: FetchOptions,
   ): Promise<CreateProjectResponse> {
     const { workspace_id, ...body } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
     return unwrap(
-      this.#client.POST('/v1/workspaces/{workspace_id}/projects', {
+      httpClient.POST('/v1/workspaces/{workspace_id}/projects', {
         params: { path: { workspace_id } },
         body,
         ...options,
@@ -276,11 +297,9 @@ class ProjectsNamespace {
    */
   public get(request: GetProjectRequest, options?: FetchOptions): Promise<GetProjectResponse> {
     const { project_id } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
     return unwrap(
-      this.#client.GET('/v1/projects/{project_id}', {
-        params: { path: { project_id } },
-        ...options,
-      }),
+      httpClient.GET('/v1/projects/{project_id}', { params: { path: { project_id } }, ...options }),
     );
   }
 
@@ -296,8 +315,9 @@ class ProjectsNamespace {
     options?: FetchOptions,
   ): Promise<UpdateProjectResponse> {
     const { project_id, ...body } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
     return unwrap(
-      this.#client.PUT('/v1/projects/{project_id}', {
+      httpClient.PUT('/v1/projects/{project_id}', {
         params: { path: { project_id } },
         body,
         ...options,
@@ -317,8 +337,9 @@ class ProjectsNamespace {
     options?: FetchOptions,
   ): Promise<DeleteProjectResponse> {
     const { project_id } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
     return unwrap(
-      this.#client.DELETE('/v1/projects/{project_id}', {
+      httpClient.DELETE('/v1/projects/{project_id}', {
         params: { path: { project_id } },
         ...options,
       }),
@@ -328,10 +349,10 @@ class ProjectsNamespace {
 
 /** @inline */
 class VirtualDataplanesNamespace {
-  #client: ReturnType<typeof createApiClient<paths>>;
+  #clients: ApiClients;
 
-  constructor(client: ReturnType<typeof createApiClient<paths>>) {
-    this.#client = client;
+  constructor(clients: ApiClients) {
+    this.#clients = clients;
   }
 
   /**
@@ -355,12 +376,11 @@ class VirtualDataplanesNamespace {
    * A cluster admits an organization only if your control plane administrator configured it to,
    * so a `cluster_id` you can read from a sibling virtual data plane is not necessarily one you
    * may place a new virtual data plane on. A cluster that does not admit this organization
-   * returns a 403. When you named the cluster, the fix is a configuration change your
-   * administrator makes. When this endpoint inferred the cluster, send an explicit `cluster_id`
-   * to place the virtual data plane on another cluster.
+   * returns a 404. When this endpoint inferred the cluster, send an explicit `cluster_id` to
+   * place the virtual data plane on another cluster.
    *
    * Deployments differ in who places virtual data planes. Where HoneyHive assigns them to
-   * organizations automatically, this endpoint returns a 403 for every request and the
+   * organizations automatically, this endpoint returns a 404 for every request and the
    * placement is not yours to make. Deployments whose administrators own the scope tree are
    * the ones this endpoint serves.
    *
@@ -385,8 +405,9 @@ class VirtualDataplanesNamespace {
     options?: FetchOptions,
   ): Promise<CreateVirtualDataplaneResponse> {
     const { org_id, ...body } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
     return unwrap(
-      this.#client.POST('/v1/orgs/{org_id}/virtual_dataplanes', {
+      httpClient.POST('/v1/orgs/{org_id}/virtual_dataplanes', {
         params: { path: { org_id } },
         body,
         ...options,
@@ -413,8 +434,9 @@ class VirtualDataplanesNamespace {
     options?: FetchOptions,
   ): Promise<GetVirtualDataplaneResponse> {
     const { virtual_dataplane_id } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
     return unwrap(
-      this.#client.GET('/v1/virtual_dataplanes/{virtual_dataplane_id}', {
+      httpClient.GET('/v1/virtual_dataplanes/{virtual_dataplane_id}', {
         params: { path: { virtual_dataplane_id } },
         ...options,
       }),
@@ -433,15 +455,16 @@ class VirtualDataplanesNamespace {
    * `name`, or sends the current one, changes nothing.
    *
    * This endpoint is unavailable where HoneyHive assigns virtual data planes automatically,
-   * and returns a 403 there.
+   * and returns a 404 there.
    */
   public update(
     request: UpdateVirtualDataplaneRequest,
     options?: FetchOptions,
   ): Promise<UpdateVirtualDataplaneResponse> {
     const { virtual_dataplane_id, ...body } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
     return unwrap(
-      this.#client.PUT('/v1/virtual_dataplanes/{virtual_dataplane_id}', {
+      httpClient.PUT('/v1/virtual_dataplanes/{virtual_dataplane_id}', {
         params: { path: { virtual_dataplane_id } },
         body,
         ...options,
@@ -467,15 +490,16 @@ class VirtualDataplanesNamespace {
    * archived, so read that first if you need the list.
    *
    * This endpoint is unavailable where HoneyHive assigns virtual data planes automatically,
-   * and returns a 403 there.
+   * and returns a 404 there.
    */
   public delete(
     request: DeleteVirtualDataplaneRequest,
     options?: FetchOptions,
   ): Promise<DeleteVirtualDataplaneResponse> {
     const { virtual_dataplane_id, dangerously_delete_child_scopes } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
     return unwrap(
-      this.#client.DELETE('/v1/virtual_dataplanes/{virtual_dataplane_id}', {
+      httpClient.DELETE('/v1/virtual_dataplanes/{virtual_dataplane_id}', {
         params: { path: { virtual_dataplane_id }, query: { dangerously_delete_child_scopes } },
         ...options,
       }),
@@ -484,17 +508,17 @@ class VirtualDataplanesNamespace {
 }
 
 export class Client {
-  #client: ReturnType<typeof createApiClient<paths>>;
+  #clients: ApiClients;
   readonly alerts: AlertsNamespace;
   readonly workspaces: WorkspacesNamespace;
   readonly projects: ProjectsNamespace;
   readonly virtualDataplanes: VirtualDataplanesNamespace;
 
   constructor(options: ClientConfig = {}) {
-    this.#client = createApiClient<paths>(options);
-    this.alerts = new AlertsNamespace(this.#client);
-    this.workspaces = new WorkspacesNamespace(this.#client);
-    this.projects = new ProjectsNamespace(this.#client);
-    this.virtualDataplanes = new VirtualDataplanesNamespace(this.#client);
+    this.#clients = createApiClient(options);
+    this.alerts = new AlertsNamespace(this.#clients);
+    this.workspaces = new WorkspacesNamespace(this.#clients);
+    this.projects = new ProjectsNamespace(this.#clients);
+    this.virtualDataplanes = new VirtualDataplanesNamespace(this.#clients);
   }
 }

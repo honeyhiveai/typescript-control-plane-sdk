@@ -83,7 +83,7 @@ The HoneyHive Control Plane API authenticates requests using an API key sent as 
 
 The control plane accepts **only fine-grained control-plane API keys**, whose values start with `hh_fgcp_`. Create one in the HoneyHive app under **Settings → API keys**, choosing the scope it roots at (an organization or a workspace) and the permissions it carries.
 
-Coarse-grained project keys (a full project key, `hh_`, or a read-only project key, `hh_ro_`) are **not** accepted by any operation this SDK exposes. The client sends whatever key it is given, so supplying one surfaces as a `401` from the control plane on your first request rather than an error at construction.
+Coarse-grained project keys (a full project key, `hh_`, or a read-only project key, `hh_ro_`) are **not** accepted by any operation this SDK exposes. A value in `apiKey` or `HH_CONTROL_PLANE_API_KEY` that is not a well-formed fine-grained control plane key throws when the client is constructed, naming the option or variable it came from, so a misplaced key fails at startup rather than as a `401` on your first request.
 
 Data plane keys belong to [`@honeyhive/api-client`](https://www.npmjs.com/package/@honeyhive/api-client), which reads `HH_PROJECT_API_KEY`. That is a separate variable, so both clients can be configured in the same process without collision.
 

@@ -244,12 +244,11 @@ export interface paths {
          *     A cluster admits an organization only if your control plane administrator configured it to,
          *     so a `cluster_id` you can read from a sibling virtual data plane is not necessarily one you
          *     may place a new virtual data plane on. A cluster that does not admit this organization
-         *     returns a 403. When you named the cluster, the fix is a configuration change your
-         *     administrator makes. When this endpoint inferred the cluster, send an explicit `cluster_id`
-         *     to place the virtual data plane on another cluster.
+         *     returns a 404. When this endpoint inferred the cluster, send an explicit `cluster_id` to
+         *     place the virtual data plane on another cluster.
          *
          *     Deployments differ in who places virtual data planes. Where HoneyHive assigns them to
-         *     organizations automatically, this endpoint returns a 403 for every request and the
+         *     organizations automatically, this endpoint returns a 404 for every request and the
          *     placement is not yours to make. Deployments whose administrators own the scope tree are
          *     the ones this endpoint serves.
          *
@@ -308,7 +307,7 @@ export interface paths {
          *     `name`, or sends the current one, changes nothing.
          *
          *     This endpoint is unavailable where HoneyHive assigns virtual data planes automatically,
-         *     and returns a 403 there.
+         *     and returns a 404 there.
          */
         put: operations['updateVirtualDataplane'];
         post?: never;
@@ -329,7 +328,7 @@ export interface paths {
          *     archived, so read that first if you need the list.
          *
          *     This endpoint is unavailable where HoneyHive assigns virtual data planes automatically,
-         *     and returns a 403 there.
+         *     and returns a 404 there.
          */
         delete: operations['deleteVirtualDataplane'];
         options?: never;
@@ -548,6 +547,8 @@ export interface components {
         PostVirtualDataplaneRequest: {
             /** @description Virtual dataplane display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. */
             name: string;
+            /** @description Globally unique identifier for the virtual dataplane, letters, digits and underscores only. Omit it and the server derives one from the name with a random suffix appended. A slug already in use returns 409. */
+            slug?: string;
             /** @description Physical cluster to host this virtual dataplane. Omit to place it alongside the existing virtual dataplanes in this org; required when the org has none yet, or when its virtual dataplanes span more than one cluster. */
             cluster_id?: string;
             /**
@@ -595,6 +596,8 @@ export interface components {
         PostWorkspaceRequest: {
             /** @description Workspace display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. */
             name: string;
+            /** @description Globally unique identifier for the workspace, letters, digits and underscores only. Omit it and the server derives one from the name with a random suffix appended. Supply it when the identifier has to match a value maintained outside HoneyHive, such as an identity provider group that grants access to this workspace. A slug already in use returns 409. */
+            slug?: string;
             /** @description Workspace description */
             description?: string;
             /**
@@ -882,6 +885,13 @@ export interface operations {
             };
             /** @description Virtual data plane not found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description The `slug` is already taken by another scope */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1184,15 +1194,15 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description The caller may not create a virtual data plane here: the permission is missing at this organization, the API key's root scope does not contain it, this deployment assigns virtual data planes automatically, or the cluster (named or inferred) does not admit this organization */
-            403: {
+            /** @description Organization or cluster not found, or the caller may not create a virtual data plane here. The response does not say which. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Organization or cluster not found */
-            404: {
+            /** @description The `slug` is already taken by another scope */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1262,14 +1272,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description The caller may not update this virtual data plane, or this deployment assigns virtual data planes automatically */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Virtual data plane not found */
+            /** @description Virtual data plane not found, or the caller may not update it, or this deployment assigns virtual data planes automatically. The response does not say which. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -1313,14 +1316,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description The caller may not delete this virtual data plane, or this deployment assigns virtual data planes automatically */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Virtual data plane not found */
+            /** @description Virtual data plane not found, or the caller may not delete it, or this deployment assigns virtual data planes automatically. The response does not say which. */
             404: {
                 headers: {
                     [name: string]: unknown;

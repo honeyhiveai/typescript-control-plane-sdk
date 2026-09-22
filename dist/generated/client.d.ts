@@ -1,10 +1,20 @@
+import { type Client as OpenapiFetchClient } from 'openapi-fetch';
 import { type paths } from './types.js';
 import { type ListAlertsRequest, type CreateAlertRequest, type GetAlertRequest, type CreateWorkspaceRequest, type GetWorkspaceRequest, type UpdateWorkspaceRequest, type DeleteWorkspaceRequest, type CreateProjectRequest, type GetProjectRequest, type UpdateProjectRequest, type DeleteProjectRequest, type CreateVirtualDataplaneRequest, type GetVirtualDataplaneRequest, type UpdateVirtualDataplaneRequest, type DeleteVirtualDataplaneRequest, type ListAlertsResponse, type CreateAlertResponse, type GetAlertResponse, type CreateWorkspaceResponse, type GetWorkspaceResponse, type UpdateWorkspaceResponse, type DeleteWorkspaceResponse, type CreateProjectResponse, type GetProjectResponse, type UpdateProjectResponse, type DeleteProjectResponse, type CreateVirtualDataplaneResponse, type GetVirtualDataplaneResponse, type UpdateVirtualDataplaneResponse, type DeleteVirtualDataplaneResponse } from './apiTypes.js';
-import { type ClientConfig, type FetchOptions, createApiClient } from '../util.js';
+import { type ClientConfig, type FetchOptions } from '../util.js';
+/** Every security scheme the API's OpenAPI spec defines. */
+export type SecurityScheme = 'ControlPlaneApiKey';
+/**
+ * What `createApiClient` returns: for every security scheme the spec defines,
+ * the openapi-fetch client that carries the credential for it. The hand-written
+ * chassis builds this table, so a scheme added to or removed from the spec
+ * fails to compile there until the table says which client serves it.
+ */
+export type ApiClients = Record<SecurityScheme, OpenapiFetchClient<paths>>;
 /** @inline */
 declare class AlertsNamespace {
     #private;
-    constructor(client: ReturnType<typeof createApiClient<paths>>);
+    constructor(clients: ApiClients);
     /**
      * List alerts
      *
@@ -35,7 +45,7 @@ declare class AlertsNamespace {
 /** @inline */
 declare class WorkspacesNamespace {
     #private;
-    constructor(client: ReturnType<typeof createApiClient<paths>>);
+    constructor(clients: ApiClients);
     /**
      * Create a workspace
      *
@@ -108,7 +118,7 @@ declare class WorkspacesNamespace {
 /** @inline */
 declare class ProjectsNamespace {
     #private;
-    constructor(client: ReturnType<typeof createApiClient<paths>>);
+    constructor(clients: ApiClients);
     /**
      * Create a project
      *
@@ -161,7 +171,7 @@ declare class ProjectsNamespace {
 /** @inline */
 declare class VirtualDataplanesNamespace {
     #private;
-    constructor(client: ReturnType<typeof createApiClient<paths>>);
+    constructor(clients: ApiClients);
     /**
      * Create a virtual data plane
      *
@@ -183,12 +193,11 @@ declare class VirtualDataplanesNamespace {
      * A cluster admits an organization only if your control plane administrator configured it to,
      * so a `cluster_id` you can read from a sibling virtual data plane is not necessarily one you
      * may place a new virtual data plane on. A cluster that does not admit this organization
-     * returns a 403. When you named the cluster, the fix is a configuration change your
-     * administrator makes. When this endpoint inferred the cluster, send an explicit `cluster_id`
-     * to place the virtual data plane on another cluster.
+     * returns a 404. When this endpoint inferred the cluster, send an explicit `cluster_id` to
+     * place the virtual data plane on another cluster.
      *
      * Deployments differ in who places virtual data planes. Where HoneyHive assigns them to
-     * organizations automatically, this endpoint returns a 403 for every request and the
+     * organizations automatically, this endpoint returns a 404 for every request and the
      * placement is not yours to make. Deployments whose administrators own the scope tree are
      * the ones this endpoint serves.
      *
@@ -236,7 +245,7 @@ declare class VirtualDataplanesNamespace {
      * `name`, or sends the current one, changes nothing.
      *
      * This endpoint is unavailable where HoneyHive assigns virtual data planes automatically,
-     * and returns a 403 there.
+     * and returns a 404 there.
      */
     update(request: UpdateVirtualDataplaneRequest, options?: FetchOptions): Promise<UpdateVirtualDataplaneResponse>;
     /**
@@ -257,7 +266,7 @@ declare class VirtualDataplanesNamespace {
      * archived, so read that first if you need the list.
      *
      * This endpoint is unavailable where HoneyHive assigns virtual data planes automatically,
-     * and returns a 403 there.
+     * and returns a 404 there.
      */
     delete(request: DeleteVirtualDataplaneRequest, options?: FetchOptions): Promise<DeleteVirtualDataplaneResponse>;
 }

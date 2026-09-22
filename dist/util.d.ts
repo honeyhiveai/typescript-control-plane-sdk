@@ -1,4 +1,5 @@
-import createClient, { type ClientOptions, type Middleware } from 'openapi-fetch';
+import { type ClientOptions, type Middleware } from 'openapi-fetch';
+import { type ApiClients } from './generated/client.js';
 /**
  * Configuration options for the HoneyHive Control Plane client. They extend the
  * options from openapi-fetch, but replace 'baseUrl' with 'controlPlaneUrl' so
@@ -7,9 +8,10 @@ import createClient, { type ClientOptions, type Middleware } from 'openapi-fetch
 export interface ClientConfig extends Omit<ClientOptions, 'baseUrl' | 'headers'> {
     /**
      * A fine-grained control-plane API key (`hh_fgcp_…`), the only credential the
-     * control plane's API accepts in practice. Sent as a bearer token as-is; the
-     * control plane is what rejects a key it doesn't accept. Defaults to the
-     * `HH_CONTROL_PLANE_API_KEY` environment variable.
+     * control plane's API accepts. Defaults to the `HH_CONTROL_PLANE_API_KEY`
+     * environment variable. The value is trimmed, and one that is not a
+     * well-formed fine-grained key throws at construction, naming the option or
+     * variable it came from. An empty value counts as no key.
      */
     apiKey?: string;
     controlPlaneUrl?: string;
@@ -33,7 +35,12 @@ export interface ClientConfig extends Omit<ClientOptions, 'baseUrl' | 'headers'>
     };
     headers?: Record<string, string>;
 }
-export declare function createApiClient<Paths extends {}>(options: ClientConfig): ReturnType<typeof createClient<Paths>>;
+/**
+ * Resolves the client's credential and returns the openapi-fetch client that
+ * carries it, keyed by the security scheme the spec defines. Every generated
+ * method indexes the result by its operation's scheme.
+ */
+export declare function createApiClient(options: ClientConfig): ApiClients;
 /**
  * Per-request fetch-level options that are orthogonal to the API request
  * payload. These are passed through to the underlying `fetch()` call via

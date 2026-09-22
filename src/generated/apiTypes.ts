@@ -56,6 +56,8 @@ export interface CreateWorkspaceRequest {
   virtual_dataplane_id: string;
   /** @description Workspace display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. */
   name: string;
+  /** @description Globally unique identifier for the workspace, letters, digits and underscores only. Omit it and the server derives one from the name with a random suffix appended. Supply it when the identifier has to match a value maintained outside HoneyHive, such as an identity provider group that grants access to this workspace. A slug already in use returns 409. */
+  slug?: string;
   /** @description Workspace description */
   description?: string;
   /**
@@ -127,6 +129,8 @@ export interface CreateVirtualDataplaneRequest {
   org_id: string;
   /** @description Virtual dataplane display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. */
   name: string;
+  /** @description Globally unique identifier for the virtual dataplane, letters, digits and underscores only. Omit it and the server derives one from the name with a random suffix appended. A slug already in use returns 409. */
+  slug?: string;
   /** @description Physical cluster to host this virtual dataplane. Omit to place it alongside the existing virtual dataplanes in this org; required when the org has none yet, or when its virtual dataplanes span more than one cluster. */
   cluster_id?: string;
   /**

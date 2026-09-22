@@ -1,6 +1,9 @@
 import axios from 'axios';
 import createClient, { type ClientOptions, type Middleware } from 'openapi-fetch';
 
+import { checkControlPlaneApiKey, maskApiKey } from './apiKeys.js';
+import { type ApiClients } from './generated/client.js';
+import { type paths } from './generated/types.js';
 import { SDK_VERSION } from './generated/version.js';
 
 // The control plane's public, API-key entrypoint. This is deliberately not the
@@ -37,68 +40,6 @@ function getEnv(key: string, defaultValue?: string): string | undefined {
 }
 
 /**
- * The prefix of a fine-grained control-plane API key, whose values have the
- * shape `hh_fgcp_<key id>_<key secret>`. In practice this is the only credential
- * the control plane's API accepts, but the SDK does not enforce that — the
- * prefix's job here is masking: it identifies the values whose key id can be
- * shown, and everything else is redacted wholesale.
- */
-const FGCP_KEY_PREFIX = 'hh_fgcp_';
-
-/**
- * The shape of the key id segment of a fine-grained key value: exactly 24
- * alphanumeric characters, with `_` and `-` excluded so that an id can never
- * read as two segments.
- *
- * The length and the alphabet are fixed properties of the key format, so a value
- * whose id segment doesn't match this either wasn't issued by HoneyHive or has
- * been altered in transit — either way it is redacted rather than rendered.
- */
-const FGCP_KEY_ID_PATTERN = /^[A-Za-z0-9]{24}$/;
-
-/**
- * Returns a display-safe rendering of an API key for verbose logging.
- *
- * Renders `hh_fgcp_<key id>_******` — the key's id and none of its secret. This
- * is character-for-character the masked form HoneyHive displays for that key, so
- * a verbose log line can be matched directly against a key in your account.
- * Masking from the id rather than from the secret is what makes it unique per
- * key and free of secret material.
- *
- * The id is `_`-free by construction, so it is everything up to the first `_`
- * after the prefix.
- *
- * Anything else collapses to 8 fixed-width asterisks, revealing neither its
- * length nor its content. That covers both a value that isn't a fine-grained key
- * at all — the SDK forwards whatever it is given, so this function must assume
- * it may be handed a coarse-grained HoneyHive key or a credential belonging to
- * some other system entirely — and a fine-grained value whose id segment is
- * truncated or mangled, where the characters after the prefix could be secret
- * material rather than an id.
- *
- * Both guards are load-bearing, and the prefix guard especially: without it the
- * unconditional slice below would chop 8 characters off an arbitrary token and
- * any value whose next 24 characters happened to be alphanumerics followed by
- * `_` would render as `hh_fgcp_<24 chars of that token>_******`, echoing part of
- * a foreign credential under our own prefix. So the output is always either
- * exactly the server's mask or fully redacted, never a partial echo.
- */
-function maskApiKey(apiKey: string): string {
-  if (!apiKey.startsWith(FGCP_KEY_PREFIX)) {
-    return '********';
-  }
-  const rest = apiKey.slice(FGCP_KEY_PREFIX.length);
-  const separator = rest.indexOf('_');
-  // An empty id never matches the pattern, so a value with no separator at all
-  // takes the redacted path without a second branch.
-  const keyId = separator === -1 ? '' : rest.slice(0, separator);
-  if (!FGCP_KEY_ID_PATTERN.test(keyId)) {
-    return '********';
-  }
-  return `${FGCP_KEY_PREFIX}${keyId}_******`;
-}
-
-/**
  * Configuration options for the HoneyHive Control Plane client. They extend the
  * options from openapi-fetch, but replace 'baseUrl' with 'controlPlaneUrl' so
  * the name is unambiguous (the data plane SDK uses 'dataPlaneUrl').
@@ -106,9 +47,10 @@ function maskApiKey(apiKey: string): string {
 export interface ClientConfig extends Omit<ClientOptions, 'baseUrl' | 'headers'> {
   /**
    * A fine-grained control-plane API key (`hh_fgcp_…`), the only credential the
-   * control plane's API accepts in practice. Sent as a bearer token as-is; the
-   * control plane is what rejects a key it doesn't accept. Defaults to the
-   * `HH_CONTROL_PLANE_API_KEY` environment variable.
+   * control plane's API accepts. Defaults to the `HH_CONTROL_PLANE_API_KEY`
+   * environment variable. The value is trimmed, and one that is not a
+   * well-formed fine-grained key throws at construction, naming the option or
+   * variable it came from. An empty value counts as no key.
    */
   apiKey?: string;
   controlPlaneUrl?: string;
@@ -154,13 +96,18 @@ function querySerializer(queryParams: Record<string, unknown>): string {
   return uri.startsWith('?') ? uri.slice(1) : uri;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- needs to match openapi-fetch's own createClient<Paths extends {}> signature
-export function createApiClient<Paths extends {}>(
-  options: ClientConfig,
-): ReturnType<typeof createClient<Paths>> {
+/**
+ * Resolves the client's credential and returns the openapi-fetch client that
+ * carries it, keyed by the security scheme the spec defines. Every generated
+ * method indexes the result by its operation's scheme.
+ */
+export function createApiClient(options: ClientConfig): ApiClients {
   const { apiKey, controlPlaneUrl, middleware, verbose, _internal_provenance, ...clientOptions } =
     options;
-  const resolvedApiKey = apiKey ?? getEnv('HH_CONTROL_PLANE_API_KEY');
+  // Option > env var. The source travels with the value so the shape check
+  // below can name where a bad value came from.
+  const [rawApiKey, apiKeySource] =
+    apiKey !== undefined ? [apiKey, 'apiKey'] : [getEnv('HH_CONTROL_PLANE_API_KEY'), 'HH_CONTROL_PLANE_API_KEY']; // prettier-ignore
 
   // Resolution order: option > env var > default. For the option, any
   // non-undefined value wins (so explicit undefined falls back). For the env
@@ -177,13 +124,18 @@ export function createApiClient<Paths extends {}>(
     version: SDK_VERSION,
   };
 
-  // Log before the missing-key check so verbose users can see what *did*
-  // resolve when construction is about to fail.
+  // Log before either check that can throw (a malformed key, a missing key) so
+  // verbose users can see what *did* resolve when construction is about to
+  // fail. The mask redacts a malformed key wholesale.
   if (resolvedVerbose) {
     console.error(`Control plane URL: ${resolvedControlPlaneUrl}`);
-    console.error(`API key: ${resolvedApiKey ? maskApiKey(resolvedApiKey) : '(none)'}`);
+    console.error(`API key: ${rawApiKey ? maskApiKey(rawApiKey) : '(none)'}`);
     console.error(`Package: ${provenance.package} v${provenance.version}`);
   }
+
+  // A present key is checked for shape here, at construction, whether or not
+  // middleware is supplied. An empty key is no key (below), not a bad one.
+  const resolvedApiKey = rawApiKey ? checkControlPlaneApiKey(rawApiKey, apiKeySource) : rawApiKey;
 
   // When middleware is supplied, it is assumed to handle authentication itself
   // (for example by attaching a short-lived token per request), so no key is
@@ -204,7 +156,7 @@ export function createApiClient<Paths extends {}>(
     headers.Authorization = `Bearer ${resolvedApiKey}`;
   }
 
-  const client = createClient<Paths>({
+  const client = createClient<paths>({
     ...clientOptions,
     querySerializer,
     // Always set (option > env > default). Middleware, when supplied, may still
@@ -221,7 +173,12 @@ export function createApiClient<Paths extends {}>(
     client.use(...middleware);
   }
 
-  return client;
+  // The control plane takes one credential kind, the fine-grained control
+  // plane key, so every scheme maps to the one client. Keyed by the schemes
+  // the spec defines, so a scheme added to or removed from the spec fails to
+  // compile here until this table says which client serves it.
+  const clients: ApiClients = { ControlPlaneApiKey: client };
+  return clients;
 }
 
 /**
