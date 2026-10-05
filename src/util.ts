@@ -2,6 +2,7 @@ import axios from 'axios';
 import createClient, { type ClientOptions, type Middleware } from 'openapi-fetch';
 
 import { checkControlPlaneApiKey, maskApiKey } from './apiKeys.js';
+import { HoneyHiveError, MissingApiKeyError } from './errors.js';
 import { type ApiClients } from './generated/client.js';
 import { type paths } from './generated/types.js';
 import { SDK_VERSION } from './generated/version.js';
@@ -142,9 +143,7 @@ export function createApiClient(options: ClientConfig): ApiClients {
   // required. The URL always resolves (option > env > default), so only the key
   // can be missing here.
   if (!resolvedApiKey && !middleware?.length) {
-    throw new Error(
-      'Missing API key: provide apiKey in options or set the HH_CONTROL_PLANE_API_KEY environment variable',
-    );
+    throw new MissingApiKeyError();
   }
 
   const headers: Record<string, string> = {
@@ -209,15 +208,6 @@ export interface FetchOptions {
 type FetchResult<T = unknown, E = unknown> =
   | { data: T; error?: undefined; response: Response }
   | { data?: undefined; error: E; response: Response };
-
-/**
- * HoneyHiveError is a base class for all errors thrown by the HoneyHive control
- * plane client.
- *
- * This error is never thrown directly, but is useful for determining if an
- * error is from the client with `err instanceof HoneyHiveError`
- */
-export class HoneyHiveError extends Error {}
 
 /**
  * Type guard that returns the payload as ErrorResponse if it matches the

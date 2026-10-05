@@ -1,4 +1,5 @@
 export { Client } from './generated/client.js';
-export { HoneyHiveError, ApiError, NetworkError, type ClientConfig, type ErrorResponse, type FetchOptions, } from './util.js';
+export { HoneyHiveError, MissingApiKeyError, MalformedApiKeyError } from './errors.js';
+export { ApiError, NetworkError, type ClientConfig, type ErrorResponse, type FetchOptions, } from './util.js';
 export type { ListAlertsRequest, CreateAlertRequest, GetAlertRequest, CreateWorkspaceRequest, GetWorkspaceRequest, UpdateWorkspaceRequest, DeleteWorkspaceRequest, CreateProjectRequest, GetProjectRequest, UpdateProjectRequest, DeleteProjectRequest, CreateVirtualDataplaneRequest, GetVirtualDataplaneRequest, UpdateVirtualDataplaneRequest, DeleteVirtualDataplaneRequest, ListAlertsResponse, CreateAlertResponse, GetAlertResponse, CreateWorkspaceResponse, GetWorkspaceResponse, UpdateWorkspaceResponse, DeleteWorkspaceResponse, CreateProjectResponse, GetProjectResponse, UpdateProjectResponse, DeleteProjectResponse, CreateVirtualDataplaneResponse, GetVirtualDataplaneResponse, UpdateVirtualDataplaneResponse, DeleteVirtualDataplaneResponse, } from './generated/apiTypes.js';
 //# sourceMappingURL=index.d.ts.map

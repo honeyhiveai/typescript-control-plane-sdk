@@ -1,4 +1,5 @@
 import { type ClientOptions, type Middleware } from 'openapi-fetch';
+import { HoneyHiveError } from './errors.js';
 import { type ApiClients } from './generated/client.js';
 /**
  * Configuration options for the HoneyHive Control Plane client. They extend the
@@ -74,15 +75,6 @@ type FetchResult<T = unknown, E = unknown> = {
     error: E;
     response: Response;
 };
-/**
- * HoneyHiveError is a base class for all errors thrown by the HoneyHive control
- * plane client.
- *
- * This error is never thrown directly, but is useful for determining if an
- * error is from the client with `err instanceof HoneyHiveError`
- */
-export declare class HoneyHiveError extends Error {
-}
 /**
  * An error that is thrown when the API call was not successful
  *

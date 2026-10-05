@@ -3,6 +3,7 @@
  * control-plane key's format, checked at client construction, and the mask the
  * verbose log renders a key with. Nothing here resolves or sends a key.
  */
+import { MalformedApiKeyError } from './errors.js';
 /**
  * The prefix of a fine-grained control-plane API key, whose values have the
  * shape `hh_fgcp_<key id>_<key secret>`. It is the only credential the control
@@ -20,9 +21,9 @@ const FGCP_KEY_PREFIX = 'hh_fgcp_';
 const FGCP_KEY_PATTERN = /^hh_fgcp_[A-Za-z0-9]{24}_[A-Za-z0-9_-]{64}$/;
 /**
  * Returns `value` if it is a well-formed fine-grained control-plane key, and
- * throws otherwise, naming `source` (the option or environment variable the
- * value came from) and what the value looks like instead. The message never
- * echoes the value itself.
+ * throws a {@link MalformedApiKeyError} otherwise, naming `source` (the option
+ * or environment variable the value came from) and what the value looks like
+ * instead. The message never echoes the value itself.
  *
  * This runs at client construction whether or not middleware is supplied: a
  * present key goes into the `Authorization` header regardless, so a malformed
@@ -34,14 +35,14 @@ export function checkControlPlaneApiKey(value, source) {
     if (FGCP_KEY_PATTERN.test(candidate)) {
         return candidate;
     }
-    const expectation = `${source} must be a fine-grained control plane API key, a value beginning with '${FGCP_KEY_PREFIX}'`;
+    let problem = 'the value provided is not a HoneyHive API key.';
     if (candidate.startsWith(FGCP_KEY_PREFIX)) {
-        throw new Error(`${expectation}; the value provided begins with it but is not a complete key.`);
+        problem = 'the value provided begins with it but is not a complete key.';
     }
-    if (candidate.startsWith('hh_')) {
-        throw new Error(`${expectation}; the value provided looks like a different kind of HoneyHive API key.`);
+    else if (candidate.startsWith('hh_')) {
+        problem = 'the value provided looks like a different kind of HoneyHive API key.';
     }
-    throw new Error(`${expectation}; the value provided is not a HoneyHive API key.`);
+    throw new MalformedApiKeyError(source, `must be a fine-grained control plane API key, a value beginning with '${FGCP_KEY_PREFIX}'; ${problem}`);
 }
 /**
  * The shape of the key id segment of a fine-grained key value: exactly 24

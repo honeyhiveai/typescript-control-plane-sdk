@@ -5,9 +5,9 @@
  */
 /**
  * Returns `value` if it is a well-formed fine-grained control-plane key, and
- * throws otherwise, naming `source` (the option or environment variable the
- * value came from) and what the value looks like instead. The message never
- * echoes the value itself.
+ * throws a {@link MalformedApiKeyError} otherwise, naming `source` (the option
+ * or environment variable the value came from) and what the value looks like
+ * instead. The message never echoes the value itself.
  *
  * This runs at client construction whether or not middleware is supplied: a
  * present key goes into the `Authorization` header regardless, so a malformed

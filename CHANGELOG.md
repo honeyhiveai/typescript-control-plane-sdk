@@ -1,5 +1,11 @@
 # TypeScript Control Plane SDK Changelog
 
+## [1.3.0] - 2026-10-05
+
+### What's New
+- New exported error classes `MissingApiKeyError` and `MalformedApiKeyError`. Both extend `HoneyHiveError`.
+- Client construction now throws `MissingApiKeyError` when no API key and no middleware are configured, and `MalformedApiKeyError` when `apiKey` or `HH_CONTROL_PLANE_API_KEY` is not a well-formed fine-grained control plane key. Before this release, both cases threw a plain `Error`. You can now catch these with `instanceof` checks. `MalformedApiKeyError.source` names the option or environment variable that held the bad value. The error never echoes the key.
+
 ## [1.2.0] - 2026-09-22
 
 ### What's New

@@ -1,6 +1,6 @@
 export { Client } from './generated/client.js';
+export { HoneyHiveError, MissingApiKeyError, MalformedApiKeyError } from './errors.js';
 export {
-  HoneyHiveError,
   ApiError,
   NetworkError,
   type ClientConfig,
