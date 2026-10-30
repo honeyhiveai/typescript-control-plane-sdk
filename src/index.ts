@@ -24,6 +24,8 @@ export type {
   GetVirtualDataplaneRequest,
   UpdateVirtualDataplaneRequest,
   DeleteVirtualDataplaneRequest,
+  GetUsageRequest,
+  GetUsageCurrentRequest,
   ListAlertsResponse,
   CreateAlertResponse,
   GetAlertResponse,
@@ -39,4 +41,6 @@ export type {
   GetVirtualDataplaneResponse,
   UpdateVirtualDataplaneResponse,
   DeleteVirtualDataplaneResponse,
+  GetUsageResponse,
+  GetUsageCurrentResponse,
 } from './generated/apiTypes.js';

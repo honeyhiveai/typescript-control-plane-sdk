@@ -19,6 +19,8 @@ import {
   type GetVirtualDataplaneRequest,
   type UpdateVirtualDataplaneRequest,
   type DeleteVirtualDataplaneRequest,
+  type GetUsageRequest,
+  type GetUsageCurrentRequest,
   type ListAlertsResponse,
   type CreateAlertResponse,
   type GetAlertResponse,
@@ -34,6 +36,8 @@ import {
   type GetVirtualDataplaneResponse,
   type UpdateVirtualDataplaneResponse,
   type DeleteVirtualDataplaneResponse,
+  type GetUsageResponse,
+  type GetUsageCurrentResponse,
 } from './apiTypes.js';
 import { type ClientConfig, type FetchOptions, createApiClient, unwrap } from '../util.js';
 
@@ -507,12 +511,69 @@ class VirtualDataplanesNamespace {
   }
 }
 
+/** @inline */
+class UsageNamespace {
+  #clients: ApiClients;
+
+  constructor(clients: ApiClients) {
+    this.#clients = clients;
+  }
+
+  /**
+   * Get usage for a date range
+   *
+   * Return an organization's usage for `[start_date, end_date)`, in one bucket per calendar
+   * month, clipped to the range and ending at the current month. The organization is identified
+   * by the `org_id` path parameter alone; the `x-hh-org-id` header does not participate.
+   *
+   * An event counts in the month that contains its `start_time`, which the client sets when it
+   * logs the event, so usage for a past month can still grow. `metrics_computed_count` is the
+   * number of `metrics.*` keys on those events. Results are always split by `event_type`; pass
+   * `group_by` to also split them by workspace or by project. Every row is returned in one
+   * response; there is no pagination. Quarter- and year-to-date totals are for the caller to
+   * sum across ranges.
+   */
+  public get(request: GetUsageRequest, options?: FetchOptions): Promise<GetUsageResponse> {
+    const { org_id, start_date, end_date, group_by } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
+    return unwrap(
+      httpClient.GET('/v1/orgs/{org_id}/usage', {
+        params: { path: { org_id }, query: { start_date, end_date, group_by } },
+        ...options,
+      }),
+    );
+  }
+
+  /**
+   * Get current usage counts
+   *
+   * Return an organization's current counts, independent of any date range: members who
+   * completed onboarding, and non-archived workspaces and projects. The organization is
+   * identified by the `org_id` path parameter alone; the `x-hh-org-id` header does not
+   * participate.
+   */
+  public getCurrent(
+    request: GetUsageCurrentRequest,
+    options?: FetchOptions,
+  ): Promise<GetUsageCurrentResponse> {
+    const { org_id } = request;
+    const httpClient = this.#clients.ControlPlaneApiKey;
+    return unwrap(
+      httpClient.GET('/v1/orgs/{org_id}/usage/current', {
+        params: { path: { org_id } },
+        ...options,
+      }),
+    );
+  }
+}
+
 export class Client {
   #clients: ApiClients;
   readonly alerts: AlertsNamespace;
   readonly workspaces: WorkspacesNamespace;
   readonly projects: ProjectsNamespace;
   readonly virtualDataplanes: VirtualDataplanesNamespace;
+  readonly usage: UsageNamespace;
 
   constructor(options: ClientConfig = {}) {
     this.#clients = createApiClient(options);
@@ -520,5 +581,6 @@ export class Client {
     this.workspaces = new WorkspacesNamespace(this.#clients);
     this.projects = new ProjectsNamespace(this.#clients);
     this.virtualDataplanes = new VirtualDataplanesNamespace(this.#clients);
+    this.usage = new UsageNamespace(this.#clients);
   }
 }

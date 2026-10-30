@@ -1,6 +1,6 @@
 import { type Client as OpenapiFetchClient } from 'openapi-fetch';
 import { type paths } from './types.js';
-import { type ListAlertsRequest, type CreateAlertRequest, type GetAlertRequest, type CreateWorkspaceRequest, type GetWorkspaceRequest, type UpdateWorkspaceRequest, type DeleteWorkspaceRequest, type CreateProjectRequest, type GetProjectRequest, type UpdateProjectRequest, type DeleteProjectRequest, type CreateVirtualDataplaneRequest, type GetVirtualDataplaneRequest, type UpdateVirtualDataplaneRequest, type DeleteVirtualDataplaneRequest, type ListAlertsResponse, type CreateAlertResponse, type GetAlertResponse, type CreateWorkspaceResponse, type GetWorkspaceResponse, type UpdateWorkspaceResponse, type DeleteWorkspaceResponse, type CreateProjectResponse, type GetProjectResponse, type UpdateProjectResponse, type DeleteProjectResponse, type CreateVirtualDataplaneResponse, type GetVirtualDataplaneResponse, type UpdateVirtualDataplaneResponse, type DeleteVirtualDataplaneResponse } from './apiTypes.js';
+import { type ListAlertsRequest, type CreateAlertRequest, type GetAlertRequest, type CreateWorkspaceRequest, type GetWorkspaceRequest, type UpdateWorkspaceRequest, type DeleteWorkspaceRequest, type CreateProjectRequest, type GetProjectRequest, type UpdateProjectRequest, type DeleteProjectRequest, type CreateVirtualDataplaneRequest, type GetVirtualDataplaneRequest, type UpdateVirtualDataplaneRequest, type DeleteVirtualDataplaneRequest, type GetUsageRequest, type GetUsageCurrentRequest, type ListAlertsResponse, type CreateAlertResponse, type GetAlertResponse, type CreateWorkspaceResponse, type GetWorkspaceResponse, type UpdateWorkspaceResponse, type DeleteWorkspaceResponse, type CreateProjectResponse, type GetProjectResponse, type UpdateProjectResponse, type DeleteProjectResponse, type CreateVirtualDataplaneResponse, type GetVirtualDataplaneResponse, type UpdateVirtualDataplaneResponse, type DeleteVirtualDataplaneResponse, type GetUsageResponse, type GetUsageCurrentResponse } from './apiTypes.js';
 import { type ClientConfig, type FetchOptions } from '../util.js';
 /** Every security scheme the API's OpenAPI spec defines. */
 export type SecurityScheme = 'ControlPlaneApiKey';
@@ -270,12 +270,42 @@ declare class VirtualDataplanesNamespace {
      */
     delete(request: DeleteVirtualDataplaneRequest, options?: FetchOptions): Promise<DeleteVirtualDataplaneResponse>;
 }
+/** @inline */
+declare class UsageNamespace {
+    #private;
+    constructor(clients: ApiClients);
+    /**
+     * Get usage for a date range
+     *
+     * Return an organization's usage for `[start_date, end_date)`, in one bucket per calendar
+     * month, clipped to the range and ending at the current month. The organization is identified
+     * by the `org_id` path parameter alone; the `x-hh-org-id` header does not participate.
+     *
+     * An event counts in the month that contains its `start_time`, which the client sets when it
+     * logs the event, so usage for a past month can still grow. `metrics_computed_count` is the
+     * number of `metrics.*` keys on those events. Results are always split by `event_type`; pass
+     * `group_by` to also split them by workspace or by project. Every row is returned in one
+     * response; there is no pagination. Quarter- and year-to-date totals are for the caller to
+     * sum across ranges.
+     */
+    get(request: GetUsageRequest, options?: FetchOptions): Promise<GetUsageResponse>;
+    /**
+     * Get current usage counts
+     *
+     * Return an organization's current counts, independent of any date range: members who
+     * completed onboarding, and non-archived workspaces and projects. The organization is
+     * identified by the `org_id` path parameter alone; the `x-hh-org-id` header does not
+     * participate.
+     */
+    getCurrent(request: GetUsageCurrentRequest, options?: FetchOptions): Promise<GetUsageCurrentResponse>;
+}
 export declare class Client {
     #private;
     readonly alerts: AlertsNamespace;
     readonly workspaces: WorkspacesNamespace;
     readonly projects: ProjectsNamespace;
     readonly virtualDataplanes: VirtualDataplanesNamespace;
+    readonly usage: UsageNamespace;
     constructor(options?: ClientConfig);
 }
 export {};

@@ -144,6 +144,20 @@ export interface DeleteVirtualDataplaneRequest {
      */
     dangerously_delete_child_scopes?: boolean;
 }
+export interface GetUsageRequest {
+    /** @description The unique identifier of the organization */
+    org_id: string;
+    /** @description Inclusive start, `YYYY-MM-DD` (UTC), no later than today */
+    start_date: string;
+    /** @description Exclusive end, `YYYY-MM-DD` (UTC), 1 to 92 days after `start_date` */
+    end_date: string;
+    /** @description Split results by workspace, or by project (each project row also carries its workspace) */
+    group_by?: 'workspace_id' | 'project_id';
+}
+export interface GetUsageCurrentRequest {
+    /** @description The unique identifier of the organization */
+    org_id: string;
+}
 /**
  * @description A paginated list of alerts
  */
@@ -252,6 +266,22 @@ export type UpdateVirtualDataplaneResponse = {
 export type DeleteVirtualDataplaneResponse = {
     success: boolean;
     data: VirtualDataplaneItem;
+};
+/**
+ * @description Org usage for a date range, in monthly buckets
+ */
+export type GetUsageResponse = {
+    /** @enum {boolean} */
+    success: true;
+    data: Usage;
+};
+/**
+ * @description Point-in-time org counts
+ */
+export type GetUsageCurrentResponse = {
+    /** @enum {boolean} */
+    success: true;
+    data: UsageCurrent;
 };
 /**
  * @description Alert object
@@ -387,6 +417,61 @@ export type ProjectItem = {
     description: string;
     created_at: string;
     updated_at?: string | null;
+};
+/**
+ * @inline
+ */
+export type Usage = {
+    /** @description ISO-8601 timestamp the response was computed at */
+    generated_at: string;
+    /** @description Calendar date, YYYY-MM-DD (UTC) */
+    start_date: string;
+    /** @description Calendar date, YYYY-MM-DD (UTC) */
+    end_date: string;
+    /** @description One bucket per calendar month in the range, through the current month. Every row is returned; there is no pagination */
+    buckets: UsageBucket[];
+};
+/**
+ * @inline
+ */
+export type UsageBucket = {
+    /** @description Inclusive bucket start */
+    start_date: string;
+    /** @description Exclusive bucket end */
+    end_date: string;
+    results: UsageResult[];
+};
+/**
+ * @inline
+ */
+export type UsageResult = {
+    workspace_id?: string;
+    /** @description The workspace scope name */
+    workspace_slug?: string;
+    /** @description The workspace scope label, or the slug if the label is empty */
+    workspace_label?: string;
+    project_id?: string;
+    /** @description The project scope name */
+    project_slug?: string;
+    /** @description The project scope label, or the slug if the label is empty */
+    project_label?: string;
+    event_type: string;
+    event_count: number;
+    /** @description Number of metrics.* keys on the events */
+    metrics_computed_count: number;
+};
+/**
+ * @inline
+ */
+export type UsageCurrent = {
+    /** @description ISO-8601 timestamp the counts were read at */
+    as_of: string;
+    /** @description Members who completed onboarding */
+    user_count: number;
+    /** @description Non-archived workspaces */
+    workspace_count: number;
+    /** @description Non-archived projects */
+    project_count: number;
 };
 /**
  * @description Virtual dataplane object

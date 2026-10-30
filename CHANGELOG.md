@@ -1,5 +1,13 @@
 # TypeScript Control Plane SDK Changelog
 
+## [1.4.0] - 2026-10-30
+
+### What's New
+- Organization usage reporting through the new `usage` namespace. `usage.get({ org_id, start_date, end_date, group_by? })` returns event counts and computed-metric counts in one bucket per calendar month. You can split the results by `workspace_id` or by `project_id`. The range starts on `start_date` and ends before `end_date`, and it can cover at most 92 days.
+- `usage.getCurrent({ org_id })` returns the organization's current counts of users, workspaces, and projects.
+- New exported types: `GetUsageRequest`, `GetUsageResponse`, `GetUsageCurrentRequest`, and `GetUsageCurrentResponse`.
+- A fine-grained control plane key needs two things to call the usage endpoints: it must be rooted at the organization, and it must hold the `org.analytics.query` permission. That permission can now be granted when you create a key.
+
 ## [1.3.0] - 2026-10-05
 
 ### What's New

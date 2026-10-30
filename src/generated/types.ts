@@ -275,6 +275,58 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/orgs/{org_id}/usage': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get usage for a date range
+     * @description Return an organization's usage for `[start_date, end_date)`, in one bucket per calendar
+     *     month, clipped to the range and ending at the current month. The organization is identified
+     *     by the `org_id` path parameter alone; the `x-hh-org-id` header does not participate.
+     *
+     *     An event counts in the month that contains its `start_time`, which the client sets when it
+     *     logs the event, so usage for a past month can still grow. `metrics_computed_count` is the
+     *     number of `metrics.*` keys on those events. Results are always split by `event_type`; pass
+     *     `group_by` to also split them by workspace or by project. Every row is returned in one
+     *     response; there is no pagination. Quarter- and year-to-date totals are for the caller to
+     *     sum across ranges.
+     */
+    get: operations['getUsage'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/orgs/{org_id}/usage/current': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get current usage counts
+     * @description Return an organization's current counts, independent of any date range: members who
+     *     completed onboarding, and non-archived workspaces and projects. The organization is
+     *     identified by the `org_id` path parameter alone; the `x-hh-org-id` header does not
+     *     participate.
+     */
+    get: operations['getUsageCurrent'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/virtual_dataplanes/{virtual_dataplane_id}': {
     parameters: {
       query?: never;
@@ -544,6 +596,61 @@ export interface components {
     DeleteProjectResponse: {
       success: boolean;
       data: components['schemas']['ProjectItem'];
+    };
+    /** @description Org usage for a date range, in monthly buckets */
+    GetUsageResponse: {
+      /** @enum {boolean} */
+      success: true;
+      data: components['schemas']['Usage'];
+    };
+    Usage: {
+      /** @description ISO-8601 timestamp the response was computed at */
+      generated_at: string;
+      /** @description Calendar date, YYYY-MM-DD (UTC) */
+      start_date: string;
+      /** @description Calendar date, YYYY-MM-DD (UTC) */
+      end_date: string;
+      /** @description One bucket per calendar month in the range, through the current month. Every row is returned; there is no pagination */
+      buckets: components['schemas']['UsageBucket'][];
+    };
+    UsageBucket: {
+      /** @description Inclusive bucket start */
+      start_date: string;
+      /** @description Exclusive bucket end */
+      end_date: string;
+      results: components['schemas']['UsageResult'][];
+    };
+    UsageResult: {
+      workspace_id?: string;
+      /** @description The workspace scope name */
+      workspace_slug?: string;
+      /** @description The workspace scope label, or the slug if the label is empty */
+      workspace_label?: string;
+      project_id?: string;
+      /** @description The project scope name */
+      project_slug?: string;
+      /** @description The project scope label, or the slug if the label is empty */
+      project_label?: string;
+      event_type: string;
+      event_count: number;
+      /** @description Number of metrics.* keys on the events */
+      metrics_computed_count: number;
+    };
+    /** @description Point-in-time org counts */
+    GetUsageCurrentResponse: {
+      /** @enum {boolean} */
+      success: true;
+      data: components['schemas']['UsageCurrent'];
+    };
+    UsageCurrent: {
+      /** @description ISO-8601 timestamp the counts were read at */
+      as_of: string;
+      /** @description Members who completed onboarding */
+      user_count: number;
+      /** @description Non-archived workspaces */
+      workspace_count: number;
+      /** @description Non-archived projects */
+      project_count: number;
     };
     /** @description Virtual dataplane object */
     VirtualDataplaneItem: {
@@ -1215,6 +1322,87 @@ export interface operations {
       };
       /** @description The `slug` is already taken by another scope */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getUsage: {
+    parameters: {
+      query: {
+        /** @description Inclusive start, `YYYY-MM-DD` (UTC), no later than today */
+        start_date: string;
+        /** @description Exclusive end, `YYYY-MM-DD` (UTC), 1 to 92 days after `start_date` */
+        end_date: string;
+        /** @description Split results by workspace, or by project (each project row also carries its workspace) */
+        group_by?: 'workspace_id' | 'project_id';
+      };
+      header?: never;
+      path: {
+        /** @description The unique identifier of the organization */
+        org_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Usage computed successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetUsageResponse'];
+        };
+      };
+      /** @description Missing or malformed dates, a range outside 1 to 92 days, a `start_date` after today, an unknown `group_by`, or an unknown query parameter */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Organization not found, or the caller may not read its usage. The response does not say which. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description The usage query exceeded its time budget (`errorCode` `query_timeout`) or its memory budget (`errorCode` `query_too_large`). Request a shorter range, or omit `group_by`. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  getUsageCurrent: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        /** @description The unique identifier of the organization */
+        org_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Counts read successfully */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['GetUsageCurrentResponse'];
+        };
+      };
+      /** @description Organization not found, or the caller may not read its usage. The response does not say which. */
+      404: {
         headers: {
           [name: string]: unknown;
         };
