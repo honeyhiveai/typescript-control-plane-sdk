@@ -47,7 +47,7 @@ export interface GetAlertRequest {
 export interface CreateWorkspaceRequest {
     /** @description The unique identifier of the virtual data plane the workspace is created in */
     virtual_dataplane_id: string;
-    /** @description Workspace display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. */
+    /** @description Workspace display name. Allowed characters are the letters A-Z and a-z (no accented letters), digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one of those letters or a digit, and must not start with a space. */
     name: string;
     /** @description Globally unique identifier for the workspace, letters, digits and underscores only. Omit it and the server derives one from the name with a random suffix appended. Supply it when the identifier has to match a value maintained outside HoneyHive, such as an identity provider group that grants access to this workspace. A slug already in use returns 409. */
     slug?: string;
@@ -66,7 +66,7 @@ export interface GetWorkspaceRequest {
 export interface UpdateWorkspaceRequest {
     /** @description The unique identifier of the workspace to update */
     workspace_id: string;
-    /** @description Workspace display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. */
+    /** @description Workspace display name. Allowed characters are the letters A-Z and a-z (no accented letters), digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one of those letters or a digit, and must not start with a space. */
     name?: string;
     /** @description Workspace description */
     description?: string;
@@ -109,10 +109,143 @@ export interface DeleteProjectRequest {
     /** @description The unique identifier of the project to delete */
     project_id: string;
 }
+export interface ListProjectMembersRequest {
+    /** @description The unique identifier of the project */
+    project_id: string;
+    /** @description 1-indexed page number */
+    page?: number;
+    /** @description Number of members to return per page */
+    limit?: number;
+}
+export interface CreateProjectMemberRequest {
+    /** @description The unique identifier of the project */
+    project_id: string;
+    /**
+     * Format: email
+     * @description The address to invite. It is stored lowercased, because sign-in matches addresses that way
+     */
+    email: string;
+}
+export interface UpdateProjectMemberRequest {
+    /** @description The unique identifier of the project */
+    project_id: string;
+    /** @description The member's user id, as the member list returns it. One person has the same user id in every organization, workspace and project */
+    user_id: string;
+    /** @description The member's new roles at this scope, replacing the old ones. Each must be a role the organization's roles manifest defines for this scope's type, which are the roles the HoneyHive app offers for a member here. Any other role is refused with 400, including one a manifest change removed, so writing back roles read before a manifest change can fail */
+    role_names: string[];
+}
+export interface DeleteProjectMemberRequest {
+    /** @description The unique identifier of the project */
+    project_id: string;
+    /** @description The member's user id, as the member list returns it. One person has the same user id in every organization, workspace and project */
+    user_id: string;
+}
+export interface GetWorkspaceTemplatesManifestRequest {
+    /** @description The unique identifier of the workspace */
+    workspace_id: string;
+}
+export interface UpdateWorkspaceTemplatesManifestRequest {
+    /** @description The unique identifier of the workspace */
+    workspace_id: string;
+    /** @description The templates manifest, as YAML. It must parse and pass templates manifest validation for a workspace, which forbids `workspace_templates`. */
+    yaml_content: string;
+}
+export interface ListWorkspaceMembersRequest {
+    /** @description The unique identifier of the workspace */
+    workspace_id: string;
+    /** @description 1-indexed page number */
+    page?: number;
+    /** @description Number of members to return per page */
+    limit?: number;
+}
+export interface CreateWorkspaceMemberRequest {
+    /** @description The unique identifier of the workspace */
+    workspace_id: string;
+    /**
+     * Format: email
+     * @description The address to invite. It is stored lowercased, because sign-in matches addresses that way
+     */
+    email: string;
+}
+export interface UpdateWorkspaceMemberRequest {
+    /** @description The unique identifier of the workspace */
+    workspace_id: string;
+    /** @description The member's user id, as the member list returns it. One person has the same user id in every organization, workspace and project */
+    user_id: string;
+    /** @description The member's new roles at this scope, replacing the old ones. Each must be a role the organization's roles manifest defines for this scope's type, which are the roles the HoneyHive app offers for a member here. Any other role is refused with 400, including one a manifest change removed, so writing back roles read before a manifest change can fail */
+    role_names: string[];
+}
+export interface DeleteWorkspaceMemberRequest {
+    /** @description The unique identifier of the workspace */
+    workspace_id: string;
+    /** @description The member's user id, as the member list returns it. One person has the same user id in every organization, workspace and project */
+    user_id: string;
+}
+export interface GetOrgRequest {
+    /** @description The unique identifier of the organization to retrieve */
+    org_id: string;
+}
+export interface UpdateOrgRequest {
+    /** @description The unique identifier of the organization to update */
+    org_id: string;
+    /** @description Organization display name. Allowed characters are the letters A-Z and a-z (no accented letters), digits, space, underscore, hyphen, apostrophe and ampersand, and the name must not start with a space. */
+    name?: string;
+}
+export interface GetRolesManifestRequest {
+    /** @description The unique identifier of the organization */
+    org_id: string;
+}
+export interface UpdateRolesManifestRequest {
+    /** @description The unique identifier of the organization */
+    org_id: string;
+    /** @description The roles manifest, as YAML. It must parse and pass roles manifest validation. */
+    yaml_content: string;
+}
+export interface GetOrgTemplatesManifestRequest {
+    /** @description The unique identifier of the organization */
+    org_id: string;
+}
+export interface UpdateOrgTemplatesManifestRequest {
+    /** @description The unique identifier of the organization */
+    org_id: string;
+    /** @description The templates manifest, as YAML. It must parse and pass templates manifest validation for an organization. */
+    yaml_content: string;
+}
+export interface ListOrgMembersRequest {
+    /** @description The unique identifier of the organization */
+    org_id: string;
+    /** @description 1-indexed page number */
+    page?: number;
+    /** @description Number of members to return per page */
+    limit?: number;
+}
+export interface CreateOrgMemberRequest {
+    /** @description The unique identifier of the organization */
+    org_id: string;
+    /**
+     * Format: email
+     * @description The address to invite. It is stored lowercased, because sign-in matches addresses that way
+     */
+    email: string;
+}
+export interface UpdateOrgMemberRequest {
+    /** @description The unique identifier of the organization */
+    org_id: string;
+    /** @description The member's user id, as the member list returns it. One person has the same user id in every organization, workspace and project */
+    user_id: string;
+    /** @description The member's new roles at this scope, replacing the old ones. Each must be a role the organization's roles manifest defines for this scope's type, which are the roles the HoneyHive app offers for a member here. Any other role is refused with 400, including one a manifest change removed, so writing back roles read before a manifest change can fail */
+    role_names: string[];
+}
+export interface DeleteOrgMemberRequest {
+    /** @description The unique identifier of the organization */
+    org_id: string;
+    /** @description The member's user id, as the member list returns it. One person has the same user id in every organization, workspace and project */
+    user_id: string;
+}
 export interface CreateVirtualDataplaneRequest {
     /** @description The unique identifier of the organization the virtual data plane is created in */
     org_id: string;
-    /** @description Virtual dataplane display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. */
+    /** @description Virtual dataplane display name. Allowed characters are the letters A-Z and a-z (no accented letters), digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one of those letters or a digit, and must not start with a space. */
     name: string;
     /** @description Globally unique identifier for the virtual dataplane, letters, digits and underscores only. Omit it and the server derives one from the name with a random suffix appended. A slug already in use returns 409. */
     slug?: string;
@@ -131,7 +264,7 @@ export interface GetVirtualDataplaneRequest {
 export interface UpdateVirtualDataplaneRequest {
     /** @description The unique identifier of the virtual data plane to update */
     virtual_dataplane_id: string;
-    /** @description Virtual dataplane display name. Allowed characters are letters, digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one letter or digit, and must not start with a space. */
+    /** @description Virtual dataplane display name. Allowed characters are the letters A-Z and a-z (no accented letters), digits, space, underscore, hyphen, apostrophe and ampersand. The name must contain at least one of those letters or a digit, and must not start with a space. */
     name?: string;
 }
 export interface DeleteVirtualDataplaneRequest {
@@ -238,6 +371,122 @@ export type UpdateProjectResponse = {
 export type DeleteProjectResponse = {
     success: boolean;
     data: ProjectItem;
+};
+export type ListProjectMembersResponse = {
+    /** @enum {boolean} */
+    success: true;
+    data: Member[];
+    pagination: Pagination;
+};
+export type CreateProjectMemberResponse = {
+    /** @enum {boolean} */
+    success: true;
+    data: Member;
+};
+export type UpdateProjectMemberResponse = {
+    /** @enum {boolean} */
+    success: true;
+    data: Member;
+};
+export type DeleteProjectMemberResponse = {
+    /** @enum {boolean} */
+    success: true;
+};
+/**
+ * @description The latest version of an organization's or a workspace's templates manifest
+ */
+export type GetWorkspaceTemplatesManifestResponse = {
+    success: boolean;
+    data: ManifestItem;
+};
+/**
+ * @description The templates manifest after the update
+ */
+export type UpdateWorkspaceTemplatesManifestResponse = {
+    success: boolean;
+    data: ManifestItem;
+};
+export type ListWorkspaceMembersResponse = {
+    /** @enum {boolean} */
+    success: true;
+    data: Member[];
+    pagination: Pagination;
+};
+export type CreateWorkspaceMemberResponse = {
+    /** @enum {boolean} */
+    success: true;
+    data: Member;
+};
+export type UpdateWorkspaceMemberResponse = {
+    /** @enum {boolean} */
+    success: true;
+    data: Member;
+};
+export type DeleteWorkspaceMemberResponse = {
+    /** @enum {boolean} */
+    success: true;
+};
+/**
+ * @description A single organization
+ */
+export type GetOrgResponse = {
+    success: boolean;
+    data: OrgItem;
+};
+/**
+ * @description The updated organization
+ */
+export type UpdateOrgResponse = {
+    success: boolean;
+    data: OrgItem;
+};
+/**
+ * @description The latest version of an organization's roles manifest
+ */
+export type GetRolesManifestResponse = {
+    success: boolean;
+    data: ManifestItem;
+};
+/**
+ * @description The organization's roles manifest after the update
+ */
+export type UpdateRolesManifestResponse = {
+    success: boolean;
+    data: ManifestItem;
+};
+/**
+ * @description The latest version of an organization's or a workspace's templates manifest
+ */
+export type GetOrgTemplatesManifestResponse = {
+    success: boolean;
+    data: ManifestItem;
+};
+/**
+ * @description The templates manifest after the update
+ */
+export type UpdateOrgTemplatesManifestResponse = {
+    success: boolean;
+    data: ManifestItem;
+};
+export type ListOrgMembersResponse = {
+    /** @enum {boolean} */
+    success: true;
+    data: Member[];
+    pagination: Pagination;
+};
+export type CreateOrgMemberResponse = {
+    /** @enum {boolean} */
+    success: true;
+    data: Member;
+};
+export type UpdateOrgMemberResponse = {
+    /** @enum {boolean} */
+    success: true;
+    data: Member;
+};
+export type DeleteOrgMemberResponse = {
+    /** @enum {boolean} */
+    success: true;
 };
 /**
  * @description The created virtual dataplane
@@ -406,6 +655,42 @@ export type Pagination = {
     has_prev: boolean;
 };
 /**
+ * @description One member of a scope
+ * @inline
+ */
+export type Member = {
+    /** @description The member's user id, the same at every scope */
+    user_id: string;
+    /** @description The member's email address */
+    email: string;
+    /** @description The member's display name from their identity provider, when it sent one */
+    name: string | null;
+    /** @description The member's roles at this scope */
+    role_names: string[];
+    /**
+     * @description `INVITED` until the member first signs in, `ONBOARDED` after. An API key cannot remove an `ONBOARDED` member whose organization roles let them revoke API keys, or change those roles to ones that do not, so an admin role a key grants can be undone with a key only while the member is `INVITED`.
+     * @enum {string}
+     */
+    state: 'INVITED' | 'ONBOARDED';
+    /** @description When the member was added to this scope */
+    created_at: string;
+    /** @description When the member's membership of this scope last changed */
+    updated_at: string | null;
+};
+/**
+ * @description Organization object
+ * @inline
+ */
+export type OrgItem = {
+    id: string;
+    /** @description Organization display name */
+    name: string;
+    /** @description Email domains for automatic membership. A user who signs in through SSO or a social login with an email at one of these domains joins the organization. The API cannot change them. Set them in the organization settings of the HoneyHive app. */
+    email_domains: string[];
+    created_at: string;
+    updated_at?: string | null;
+};
+/**
  * @description Project object
  * @inline
  */
@@ -417,6 +702,16 @@ export type ProjectItem = {
     description: string;
     created_at: string;
     updated_at?: string | null;
+};
+/**
+ * @description One version of a manifest
+ * @inline
+ */
+export type ManifestItem = {
+    /** @description The manifest, as the YAML it was saved with */
+    yaml_content: string;
+    /** @description When this version was saved */
+    created_at: string;
 };
 /**
  * @inline

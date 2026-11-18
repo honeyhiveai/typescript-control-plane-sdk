@@ -1,5 +1,15 @@
 # TypeScript Control Plane SDK Changelog
 
+## [1.5.0] - 2026-11-18
+
+### What's New
+- Organization metadata through the new `orgs` namespace. `orgs.get({ org_id })` returns the organization, and `orgs.update({ org_id, name })` renames it.
+- Roles manifest management through the new `roles` namespace. `roles.get({ org_id })` returns the organization's roles manifest, and `roles.update({ org_id, yaml_content })` replaces it. The new YAML must parse and pass roles manifest validation.
+- Templates manifest management through the new `orgTemplates` and `workspaceTemplates` namespaces. Each one has `get()` and `update()`, and `update()` takes the full manifest as YAML in `yaml_content`.
+- Member management at every scope level through the new `orgMembers`, `workspaceMembers`, and `projectMembers` namespaces. Each one has `list()` (paginated with `page` and `limit`), `create()` (invite by `email`), `update()` (replace a member's `role_names`), and `delete()`. Members are addressed by `user_id`, and a person has the same `user_id` in every organization, workspace, and project.
+- `update()` on a member namespace returns a 400 for any role that the organization's roles manifest does not define for that scope type. This includes a role that a manifest change removed, so writing back roles you read before a manifest change can fail.
+- New exported request and response types for each method above, such as `GetOrgRequest`/`GetOrgResponse`, `UpdateRolesManifestRequest`/`UpdateRolesManifestResponse`, `GetOrgTemplatesManifestRequest`/`GetOrgTemplatesManifestResponse`, and `ListOrgMembersRequest`/`ListOrgMembersResponse`.
+
 ## [1.4.0] - 2026-10-30
 
 ### What's New

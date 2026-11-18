@@ -243,6 +243,543 @@ class ProjectsNamespace {
     }
 }
 /** @inline */
+class ProjectMembersNamespace {
+    #clients;
+    constructor(clients) {
+        this.#clients = clients;
+    }
+    /**
+     * List a project's members
+     *
+     * Return one page of a project's members, oldest membership first. Each member carries their
+     * roles in the project and whether they have signed in yet. The project is identified by the
+     * `project_id` path parameter alone. The `x-hh-project-id` header does not participate.
+     *
+     * Available on self-hosted deployments that do not enable an SSO group scheme. Elsewhere this
+     * operation returns 404. An API key that carries a membership permission can carry no
+     * permission other than the roles and membership permissions, and is created on an
+     * organization.
+     */
+    list(request, options) {
+        const { project_id, page, limit } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.GET('/v1/projects/{project_id}/members', {
+            params: { path: { project_id }, query: { page, limit } },
+            ...options,
+        }));
+    }
+    /**
+     * Invite someone to a project
+     *
+     * Invite one email address to a project, and return the member. The address is stored
+     * lowercased. An address with no HoneyHive user yet gets one, and the invitee receives an
+     * email. An email sent for a request made with an API key names the inviter as a HoneyHive
+     * teammate.
+     *
+     * The invitee also becomes a member, with no roles, of the project's workspace, virtual data
+     * plane and organization, wherever they are not one already.
+     *
+     * The new member has no roles, and is `INVITED` until they first sign in. Sign-in keeps any
+     * roles set before then and adds the roles the organization's roles manifest gives invited
+     * members. To give them roles now, set their roles with the `user_id` this returns.
+     *
+     * Inviting an address that is already a member returns that member unchanged, and sends no
+     * email, so sending the same invite again is safe. The project is identified by the
+     * `project_id` path parameter alone. The `x-hh-project-id` header does not participate.
+     *
+     * Available on self-hosted deployments that do not enable an SSO group scheme. Elsewhere this
+     * operation returns 404. An API key that carries a membership permission can carry no
+     * permission other than the roles and membership permissions, and is created on an
+     * organization.
+     */
+    create(request, options) {
+        const { project_id, ...body } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.POST('/v1/projects/{project_id}/members', {
+            params: { path: { project_id } },
+            body,
+            ...options,
+        }));
+    }
+    /**
+     * Set a member's roles in a project
+     *
+     * Replace a member's roles in a project with the roles given, and return the member. The
+     * member's current sessions must reauthorize, so the new roles apply immediately. The member
+     * may still be `INVITED`. The project and the member are identified by the path parameters
+     * alone. The `x-hh-project-id` header does not participate.
+     *
+     * Each role must be one the organization's roles manifest defines for projects, which are the
+     * roles the HoneyHive app offers there. Any other role is refused with 400, including one a
+     * manifest change removed, so writing back roles read before such a change can fail. When the
+     * organization has no valid roles manifest in force, the roles cannot be checked and the
+     * request is refused with 409.
+     *
+     * Available on self-hosted deployments that do not enable an SSO group scheme. Elsewhere this
+     * operation returns 404. An API key that carries a membership permission can carry no
+     * permission other than the roles and membership permissions, and is created on an
+     * organization.
+     */
+    update(request, options) {
+        const { project_id, user_id, ...body } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.PATCH('/v1/projects/{project_id}/members/{user_id}', {
+            params: { path: { project_id, user_id } },
+            body,
+            ...options,
+        }));
+    }
+    /**
+     * Remove someone from a project
+     *
+     * Remove a user from a project, which also withdraws a pending invite. The user's current
+     * sessions must reauthorize. Their HoneyHive user stays, along with their memberships of the
+     * project's workspace, virtual data plane and organization. The project and the user are
+     * identified by the path parameters alone. The `x-hh-project-id` header does not participate.
+     *
+     * Available on self-hosted deployments that do not enable an SSO group scheme. Elsewhere this
+     * operation returns 404. An API key that carries a membership permission can carry no
+     * permission other than the roles and membership permissions, and is created on an
+     * organization.
+     */
+    delete(request, options) {
+        const { project_id, user_id } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.DELETE('/v1/projects/{project_id}/members/{user_id}', {
+            params: { path: { project_id, user_id } },
+            ...options,
+        }));
+    }
+}
+/** @inline */
+class WorkspaceTemplatesNamespace {
+    #clients;
+    constructor(clients) {
+        this.#clients = clients;
+    }
+    /**
+     * Get a workspace's templates manifest
+     *
+     * Return the latest version of a workspace's templates manifest: the YAML that defines the
+     * metrics and charts that new projects in the workspace start with. The workspace is
+     * identified by the `workspace_id` path parameter alone. The `x-hh-workspace-id` header does
+     * not participate.
+     *
+     * A workspace starts with a copy of its organization's manifest. Its projects use the
+     * workspace's manifest, together with the organization's only when the workspace's manifest
+     * sets `config.merge_strategy` to `merge`.
+     */
+    get(request, options) {
+        const { workspace_id } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.GET('/v1/workspaces/{workspace_id}/templates_manifest', {
+            params: { path: { workspace_id } },
+            ...options,
+        }));
+    }
+    /**
+     * Replace a workspace's templates manifest
+     *
+     * Save a new version of a workspace's templates manifest, which becomes the latest version.
+     * It decides the metrics and charts that projects created afterward in the workspace start
+     * with. Existing projects are not changed. The workspace is identified by the `workspace_id`
+     * path parameter alone. The `x-hh-workspace-id` header does not participate.
+     *
+     * A workspace manifest cannot define `workspace_templates`.
+     *
+     * When an API key makes the request and the workspace's latest version already has this
+     * content, nothing is saved and that version is returned, so applying the same manifest
+     * repeatedly is safe.
+     */
+    update(request, options) {
+        const { workspace_id, ...body } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.PUT('/v1/workspaces/{workspace_id}/templates_manifest', {
+            params: { path: { workspace_id } },
+            body,
+            ...options,
+        }));
+    }
+}
+/** @inline */
+class WorkspaceMembersNamespace {
+    #clients;
+    constructor(clients) {
+        this.#clients = clients;
+    }
+    /**
+     * List a workspace's members
+     *
+     * Return one page of a workspace's members, oldest membership first. Each member carries their
+     * roles in the workspace and whether they have signed in yet. The workspace is identified by
+     * the `workspace_id` path parameter alone. The `x-hh-workspace-id` header does not
+     * participate.
+     *
+     * Available on self-hosted deployments that do not enable an SSO group scheme. Elsewhere this
+     * operation returns 404. An API key that carries a membership permission can carry no
+     * permission other than the roles and membership permissions, and is created on an
+     * organization.
+     */
+    list(request, options) {
+        const { workspace_id, page, limit } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.GET('/v1/workspaces/{workspace_id}/members', {
+            params: { path: { workspace_id }, query: { page, limit } },
+            ...options,
+        }));
+    }
+    /**
+     * Invite someone to a workspace
+     *
+     * Invite one email address to a workspace, and return the member. The address is stored
+     * lowercased. An address with no HoneyHive user yet gets one, and the invitee receives an
+     * email. An email sent for a request made with an API key names the inviter as a HoneyHive
+     * teammate.
+     *
+     * The invitee also becomes a member, with no roles, of the workspace's virtual data plane and
+     * organization, wherever they are not one already.
+     *
+     * The new member has no roles, and is `INVITED` until they first sign in. Sign-in keeps any
+     * roles set before then and adds the roles the organization's roles manifest gives invited
+     * members. To give them roles now, set their roles with the `user_id` this returns.
+     *
+     * Inviting an address that is already a member returns that member unchanged, and sends no
+     * email, so sending the same invite again is safe. The workspace is identified by the
+     * `workspace_id` path parameter alone. The `x-hh-workspace-id` header does not participate.
+     *
+     * Available on self-hosted deployments that do not enable an SSO group scheme. Elsewhere this
+     * operation returns 404. An API key that carries a membership permission can carry no
+     * permission other than the roles and membership permissions, and is created on an
+     * organization.
+     */
+    create(request, options) {
+        const { workspace_id, ...body } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.POST('/v1/workspaces/{workspace_id}/members', {
+            params: { path: { workspace_id } },
+            body,
+            ...options,
+        }));
+    }
+    /**
+     * Set a member's roles in a workspace
+     *
+     * Replace a member's roles in a workspace with the roles given, and return the member. The
+     * member's current sessions must reauthorize, so the new roles apply immediately. The member
+     * may still be `INVITED`. The workspace and the member are identified by the path parameters
+     * alone. The `x-hh-workspace-id` header does not participate.
+     *
+     * Each role must be one the organization's roles manifest defines for workspaces, which are
+     * the roles the HoneyHive app offers there. Any other role is refused with 400, including one
+     * a manifest change removed, so writing back roles read before such a change can fail. When
+     * the organization has no valid roles manifest in force, the roles cannot be checked and the
+     * request is refused with 409.
+     *
+     * Available on self-hosted deployments that do not enable an SSO group scheme. Elsewhere this
+     * operation returns 404. An API key that carries a membership permission can carry no
+     * permission other than the roles and membership permissions, and is created on an
+     * organization.
+     */
+    update(request, options) {
+        const { workspace_id, user_id, ...body } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.PATCH('/v1/workspaces/{workspace_id}/members/{user_id}', {
+            params: { path: { workspace_id, user_id } },
+            body,
+            ...options,
+        }));
+    }
+    /**
+     * Remove someone from a workspace
+     *
+     * Remove a user from a workspace and from every project in it, which also withdraws a pending
+     * invite. The user's current sessions must reauthorize. Their HoneyHive user stays, along with
+     * their memberships of the workspace's virtual data plane and organization. The workspace and
+     * the user are identified by the path parameters alone. The `x-hh-workspace-id` header does
+     * not participate.
+     *
+     * Available on self-hosted deployments that do not enable an SSO group scheme. Elsewhere this
+     * operation returns 404. An API key that carries a membership permission can carry no
+     * permission other than the roles and membership permissions, and is created on an
+     * organization.
+     */
+    delete(request, options) {
+        const { workspace_id, user_id } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.DELETE('/v1/workspaces/{workspace_id}/members/{user_id}', {
+            params: { path: { workspace_id, user_id } },
+            ...options,
+        }));
+    }
+}
+/** @inline */
+class OrgsNamespace {
+    #clients;
+    constructor(clients) {
+        this.#clients = clients;
+    }
+    /**
+     * Get an organization
+     *
+     * Retrieve an organization's display name and email domains. The organization is identified by
+     * the `org_id` path parameter alone; the `x-hh-org-id` header does not participate. Your
+     * organization's id is listed on the API keys page of your organization settings in the
+     * HoneyHive app.
+     */
+    get(request, options) {
+        const { org_id } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.GET('/v1/orgs/{org_id}', { params: { path: { org_id } }, ...options }));
+    }
+    /**
+     * Update an organization
+     *
+     * Update an organization's display name. The organization is identified by the `org_id` path
+     * parameter alone; the `x-hh-org-id` header does not participate.
+     *
+     * The organization's email domains cannot be changed through the API. Set them in the
+     * organization settings of the HoneyHive app.
+     */
+    update(request, options) {
+        const { org_id, ...body } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.PATCH('/v1/orgs/{org_id}', { params: { path: { org_id } }, body, ...options }));
+    }
+}
+/** @inline */
+class RolesNamespace {
+    #clients;
+    constructor(clients) {
+        this.#clients = clients;
+    }
+    /**
+     * Get an organization's roles manifest
+     *
+     * Return the latest version of an organization's roles manifest: the YAML that defines its
+     * roles and the permissions each one grants, as the organization settings page in the
+     * HoneyHive app shows it. The organization is identified by the `org_id` path parameter
+     * alone. The `x-hh-org-id` header does not participate.
+     *
+     * Available on self-hosted deployments only. Elsewhere this operation returns 404. An API key
+     * that carries `org.roles.get` or `org.roles.set` can carry no permission other than the
+     * roles and membership permissions, and is created on an organization.
+     */
+    get(request, options) {
+        const { org_id } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.GET('/v1/orgs/{org_id}/roles_manifest', {
+            params: { path: { org_id } },
+            ...options,
+        }));
+    }
+    /**
+     * Replace an organization's roles manifest
+     *
+     * Save a new version of an organization's roles manifest, which becomes the latest version.
+     * Every member's current session must reauthorize, so the new roles apply to everyone
+     * immediately. The organization is identified by the `org_id` path parameter alone. The
+     * `x-hh-org-id` header does not participate.
+     *
+     * When an API key makes the request, two further rules apply:
+     *
+     * - If the organization's current roles manifest already has this content, nothing is saved
+     *   and that version is returned, so applying the same manifest repeatedly is safe.
+     * - A manifest that would leave no onboarded, active member holding `org.roles.get`,
+     *   `org.roles.set`, `org.fine_grained_api_key_cp.list` and
+     *   `org.fine_grained_api_key_cp.delete` is refused with 409, so someone in the organization
+     *   can always revoke the key.
+     *
+     * Available on self-hosted deployments only. Elsewhere this operation returns 404. An API key
+     * that carries `org.roles.get` or `org.roles.set` can carry no permission other than the
+     * roles and membership permissions, and is created on an organization.
+     */
+    update(request, options) {
+        const { org_id, ...body } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.PUT('/v1/orgs/{org_id}/roles_manifest', {
+            params: { path: { org_id } },
+            body,
+            ...options,
+        }));
+    }
+}
+/** @inline */
+class OrgTemplatesNamespace {
+    #clients;
+    constructor(clients) {
+        this.#clients = clients;
+    }
+    /**
+     * Get an organization's templates manifest
+     *
+     * Return the latest version of an organization's templates manifest: the YAML that defines
+     * the metrics and charts that new projects start with, as the templates page of the
+     * organization settings in the HoneyHive app shows it. The organization is identified by the
+     * `org_id` path parameter alone. The `x-hh-org-id` header does not participate.
+     *
+     * A workspace gets a copy of this manifest when it is created, and its projects use that
+     * copy. They use this manifest as well only when the workspace's manifest sets
+     * `config.merge_strategy` to `merge`.
+     */
+    get(request, options) {
+        const { org_id } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.GET('/v1/orgs/{org_id}/templates_manifest', {
+            params: { path: { org_id } },
+            ...options,
+        }));
+    }
+    /**
+     * Replace an organization's templates manifest
+     *
+     * Save a new version of an organization's templates manifest, which becomes the latest
+     * version. Existing projects are not changed. The organization is identified by the `org_id`
+     * path parameter alone. The `x-hh-org-id` header does not participate.
+     *
+     * A workspace gets a copy of this manifest when it is created, and its projects use that
+     * copy. They use this manifest as well only when the workspace's manifest sets
+     * `config.merge_strategy` to `merge`. A new version therefore reaches projects in
+     * workspaces created afterward, and in existing workspaces whose manifest merges. To change
+     * what new projects in an existing workspace start with, update that workspace's manifest.
+     *
+     * When an API key makes the request and the organization's latest version already has this
+     * content, nothing is saved and that version is returned, so applying the same manifest
+     * repeatedly is safe.
+     */
+    update(request, options) {
+        const { org_id, ...body } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.PUT('/v1/orgs/{org_id}/templates_manifest', {
+            params: { path: { org_id } },
+            body,
+            ...options,
+        }));
+    }
+}
+/** @inline */
+class OrgMembersNamespace {
+    #clients;
+    constructor(clients) {
+        this.#clients = clients;
+    }
+    /**
+     * List an organization's members
+     *
+     * Return one page of an organization's members, oldest membership first. Each member carries
+     * their roles in the organization and whether they have signed in yet. The organization is
+     * identified by the `org_id` path parameter alone. The `x-hh-org-id` header does not
+     * participate.
+     *
+     * Available on self-hosted deployments that do not enable an SSO group scheme. Elsewhere this
+     * operation returns 404. An API key that carries a membership permission can carry no
+     * permission other than the roles and membership permissions, and is created on an
+     * organization.
+     */
+    list(request, options) {
+        const { org_id, page, limit } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.GET('/v1/orgs/{org_id}/members', {
+            params: { path: { org_id }, query: { page, limit } },
+            ...options,
+        }));
+    }
+    /**
+     * Invite someone to an organization
+     *
+     * Invite one email address to an organization, and return the member. The address is stored
+     * lowercased. An address with no HoneyHive user yet gets one, and the invitee receives an
+     * email. An email sent for a request made with an API key names the inviter as a HoneyHive
+     * teammate.
+     *
+     * The new member has no roles, and is `INVITED` until they first sign in. Sign-in keeps any
+     * roles set before then and adds the roles the organization's roles manifest gives invited
+     * members. To give them roles now, set their roles with the `user_id` this returns.
+     *
+     * Inviting an address that is already a member returns that member unchanged, and sends no
+     * email, so sending the same invite again is safe. The organization is identified by the
+     * `org_id` path parameter alone. The `x-hh-org-id` header does not participate.
+     *
+     * Available on self-hosted deployments that do not enable an SSO group scheme. Elsewhere this
+     * operation returns 404. An API key that carries a membership permission can carry no
+     * permission other than the roles and membership permissions, and is created on an
+     * organization.
+     */
+    create(request, options) {
+        const { org_id, ...body } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.POST('/v1/orgs/{org_id}/members', {
+            params: { path: { org_id } },
+            body,
+            ...options,
+        }));
+    }
+    /**
+     * Set a member's roles in an organization
+     *
+     * Replace a member's roles in an organization with the roles given, and return the member. The
+     * member's current sessions must reauthorize, so the new roles apply immediately. The member
+     * may still be `INVITED`. The organization and the member are identified by the path
+     * parameters alone. The `x-hh-org-id` header does not participate.
+     *
+     * Each role must be one the organization's roles manifest defines for organizations, which are
+     * the roles the HoneyHive app offers there. Any other role is refused with 400, including one
+     * a manifest change removed, so writing back roles read before such a change can fail. When
+     * the organization has no valid roles manifest in force, the roles cannot be checked and the
+     * request is refused with 409.
+     *
+     * When an API key makes the request, it cannot take the ability to revoke API keys from a
+     * member who has signed in. If the member's roles grant `org.roles.get`, `org.roles.set`,
+     * `org.fine_grained_api_key_cp.list` and `org.fine_grained_api_key_cp.delete`, and the new
+     * roles would not, the request is refused with 409 and the change has to be made in the
+     * HoneyHive app. An API key can still give any member those roles, and can change the roles of
+     * a member who has not signed in yet.
+     *
+     * Available on self-hosted deployments that do not enable an SSO group scheme. Elsewhere this
+     * operation returns 404. An API key that carries a membership permission can carry no
+     * permission other than the roles and membership permissions, and is created on an
+     * organization.
+     */
+    update(request, options) {
+        const { org_id, user_id, ...body } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.PATCH('/v1/orgs/{org_id}/members/{user_id}', {
+            params: { path: { org_id, user_id } },
+            body,
+            ...options,
+        }));
+    }
+    /**
+     * Remove someone from an organization
+     *
+     * Remove a user from an organization and from every virtual data plane, workspace and project
+     * in it, which also withdraws a pending invite. The user's current sessions must reauthorize.
+     * Their HoneyHive user stays, along with their memberships of other organizations. The
+     * organization and the user are identified by the path parameters alone. The `x-hh-org-id`
+     * header does not participate.
+     *
+     * When an API key makes the request, it cannot remove a member who has signed in and whose
+     * roles grant `org.roles.get`, `org.roles.set`, `org.fine_grained_api_key_cp.list` and
+     * `org.fine_grained_api_key_cp.delete`, so someone in the organization can always revoke the
+     * key. Such a request is refused with 409, and the member has to be removed in the HoneyHive
+     * app. A member who has not signed in yet can be removed with an API key whatever their roles.
+     * When the organization has no valid roles manifest in force, a member who has signed in
+     * cannot be checked, and an API key's request to remove them is refused with 409.
+     *
+     * Available on self-hosted deployments that do not enable an SSO group scheme. Elsewhere this
+     * operation returns 404. An API key that carries a membership permission can carry no
+     * permission other than the roles and membership permissions, and is created on an
+     * organization.
+     */
+    delete(request, options) {
+        const { org_id, user_id } = request;
+        const httpClient = this.#clients.ControlPlaneApiKey;
+        return unwrap(httpClient.DELETE('/v1/orgs/{org_id}/members/{user_id}', {
+            params: { path: { org_id, user_id } },
+            ...options,
+        }));
+    }
+}
+/** @inline */
 class VirtualDataplanesNamespace {
     #clients;
     constructor(clients) {
@@ -426,6 +963,13 @@ export class Client {
     alerts;
     workspaces;
     projects;
+    projectMembers;
+    workspaceTemplates;
+    workspaceMembers;
+    orgs;
+    roles;
+    orgTemplates;
+    orgMembers;
     virtualDataplanes;
     usage;
     constructor(options = {}) {
@@ -433,6 +977,13 @@ export class Client {
         this.alerts = new AlertsNamespace(this.#clients);
         this.workspaces = new WorkspacesNamespace(this.#clients);
         this.projects = new ProjectsNamespace(this.#clients);
+        this.projectMembers = new ProjectMembersNamespace(this.#clients);
+        this.workspaceTemplates = new WorkspaceTemplatesNamespace(this.#clients);
+        this.workspaceMembers = new WorkspaceMembersNamespace(this.#clients);
+        this.orgs = new OrgsNamespace(this.#clients);
+        this.roles = new RolesNamespace(this.#clients);
+        this.orgTemplates = new OrgTemplatesNamespace(this.#clients);
+        this.orgMembers = new OrgMembersNamespace(this.#clients);
         this.virtualDataplanes = new VirtualDataplanesNamespace(this.#clients);
         this.usage = new UsageNamespace(this.#clients);
     }
