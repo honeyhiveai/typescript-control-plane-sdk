@@ -1,5 +1,10 @@
 # TypeScript Control Plane SDK Changelog
 
+## [1.5.1] - 2026-11-25
+
+### Compatibility & Deprecations
+- The `axios` runtime dependency moves from 1.20.0 to 1.21.1.
+
 ## [1.5.0] - 2026-11-18
 
 ### What's New
